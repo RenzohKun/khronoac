@@ -1,5 +1,5 @@
 from typing import List
-from Franja_Horaria import FranjaHoraria
+from FranjaHoraria import FranjaHoraria
 
 class Horario:
     def __init__(self, id_horario: str, periodo_academico: str, tipo_horario: str):

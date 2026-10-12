@@ -2,13 +2,7 @@ from abc import ABC, abstractmethod
 
 class Persona(ABC):
 
-    def __init__(
-        self,
-        cedula: str,
-        nombres: str,
-        apellidos: str,
-        correo_institucional: str,
-    ):
+    def __init__(self, cedula: str, nombres: str, apellidos: str, correo_institucional: str,):
         self._cedula: str = cedula
         self._nombres: str = nombres
         self._apellidos: str = apellidos

@@ -1,16 +1,22 @@
-from persona import Persona 
+from Persona import Persona
 
-class Docente(Persona): 
-    def __init__(self, cedula, nombre, apellidos, correo, titulo_academico, disponibilidad):
-        super().__init__(cedula, nombre, apellidos, correo)
+class Docente(Persona):
+
+    def __init__(self, cedula, nombres, apellidos, correo, titulo_academico, disponibilidad=None,):
+        super().__init__(cedula, nombres, apellidos, correo)
         self.titulo_academico = titulo_academico
-        self.disponibilidad = disponibilidad
+        self.disponibilidad = (
+            disponibilidad if disponibilidad is not None else []
+        )
 
-    def registrar_disponibilidad(self, disponibilidad): 
-        return 
+    def registrar_disponibilidad(self, franja):
+        self.disponibilidad.append(franja)
 
-    def verificar_disponibilidad(franja_horaria):
-        return
+    def verificar_disponibilidad(self, franja_horaria):
+        return True
+
+    def obtener_datos(self):
+        return f"Docente: {self.nombres} {self.apellidos} - Título: {self.titulo_academico}"
 
     def obtener_carga_academica(self):
-        return
+        return f"Horarios disponibles: {len(self.disponibilidad)}"

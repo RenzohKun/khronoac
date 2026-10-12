@@ -1,4 +1,3 @@
-from persona import Persona
 from typing import List
 
 class Asignatura:
