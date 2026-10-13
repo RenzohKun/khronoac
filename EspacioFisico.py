@@ -1,36 +1,59 @@
-from typing import TYPE_CHECKING, List
+from typing import List
 
-if TYPE_CHECKING:
-    from FranjaHoraria import FranjaHoraria
+from FranjaHoraria import FranjaHoraria
+
 
 class EspacioFisico:
+    def __init__(self, codigoAula: str, capacidadMaxima: int) -> None:
+        self.__codigoAula = codigoAula
+        self.__capacidadMaxima = capacidadMaxima
+        self.__franjasOcupadas: List[FranjaHoraria] = []
+        self.__validarCapacidad(capacidadMaxima)
 
-    def __init__(self, codigoAula: str, capacidadMaxima: int):
-        self._codigoAula: str = codigoAula
-        self._capacidadMaxima: int = capacidadMaxima
-        self._franjasOcupadas: List["FranjaHoraria"] = []
+    @staticmethod
+    def __validarCapacidad(valor: int) -> None:
+        if valor < 0:
+            raise ValueError("La capacidad máxima no puede ser negativa.")
 
     @property
     def codigoAula(self) -> str:
-        return self._codigoAula
+        return self.__codigoAula
+
+    @codigoAula.setter
+    def codigoAula(self, valor: str) -> None:
+        self.__codigoAula = valor
 
     @property
     def capacidadMaxima(self) -> int:
-        return self._capacidadMaxima
+        return self.__capacidadMaxima
 
-    def verificarAforo(self, cantidad: int) -> bool:
-        return cantidad <= self._capacidadMaxima
+    @capacidadMaxima.setter
+    def capacidadMaxima(self, valor: int) -> None:
+        self.__validarCapacidad(valor)
+        self.__capacidadMaxima = valor
 
-    def estaDisponible(self, franja: "FranjaHoraria") -> bool:
-        for f in self._franjasOcupadas:
-            if hasattr(f, "verificarSolapamiento") and f.verificarSolapamiento(
-                franja
-            ):
-                return False
+    @property
+    def franjasOcupadas(self) -> List[FranjaHoraria]:
+        return self.__franjasOcupadas.copy()
+
+    def verificarAforo(self, cantidad: int) -> int:
+        """Devuelve los puestos restantes; un valor negativo indica exceso de aforo."""
+        return self.__capacidadMaxima - cantidad
+
+    def estaDisponible(self, franja: FranjaHoraria) -> bool:
+        return all(
+            not ocupada.verificarSolapamiento(franja)
+            for ocupada in self.__franjasOcupadas
+        )
+
+    def reservarFranja(self, franja: FranjaHoraria) -> bool:
+        if not self.estaDisponible(franja):
+            return False
+        self.__franjasOcupadas.append(franja)
         return True
 
-    def reservarFranja(self, franja: "FranjaHoraria") -> bool:
-        if self.estaDisponible(franja):
-            self._franjasOcupadas.append(franja)
-            return True
-        return False
+    def liberarFranja(self, franja: FranjaHoraria) -> bool:
+        if franja not in self.__franjasOcupadas:
+            return False
+        self.__franjasOcupadas.remove(franja)
+        return True

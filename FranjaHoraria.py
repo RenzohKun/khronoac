@@ -1,26 +1,59 @@
 from datetime import time
 
+
 class FranjaHoraria:
-    def __init__(self, dia_semana: str, hora_inicio: time, hora_fin: time):
-        self._dia_semana: str = dia_semana
-        self._hora_inicio: time = hora_inicio
-        self._hora_fin: time = hora_fin
+    def __init__(self, diaSemana: str, horaInicio: time, horaFin: time) -> None:
+        self.__diaSemana = diaSemana
+        self.__horaInicio = horaInicio
+        self.__horaFin = horaFin
+        self.__validarHoras()
 
     @property
-    def dia_semana(self) -> str:
-        return self._dia_semana
+    def diaSemana(self) -> str:
+        return self.__diaSemana
+
+    @diaSemana.setter
+    def diaSemana(self, valor: str) -> None:
+        self.__diaSemana = valor
 
     @property
-    def hora_inicio(self) -> time:
-        return self._hora_inicio
+    def horaInicio(self) -> time:
+        return self.__horaInicio
+
+    @horaInicio.setter
+    def horaInicio(self, valor: time) -> None:
+        anterior = self.__horaInicio
+        self.__horaInicio = valor
+        try:
+            self.__validarHoras()
+        except (TypeError, ValueError):
+            self.__horaInicio = anterior
+            raise
 
     @property
-    def hora_fin(self) -> time:
-        return self._hora_fin
+    def horaFin(self) -> time:
+        return self.__horaFin
 
-    def verificar_solapamiento(self, otra_franja: "FranjaHoraria") -> bool:
-        
-        if self._dia_semana.lower() != otra_franja.dia_semana.lower():
+    @horaFin.setter
+    def horaFin(self, valor: time) -> None:
+        anterior = self.__horaFin
+        self.__horaFin = valor
+        try:
+            self.__validarHoras()
+        except (TypeError, ValueError):
+            self.__horaFin = anterior
+            raise
+
+    def __validarHoras(self) -> None:
+        if not isinstance(self.__horaInicio, time) or not isinstance(self.__horaFin, time):
+            raise TypeError("Las horas deben ser objetos datetime.time.")
+        if self.__horaInicio >= self.__horaFin:
+            raise ValueError("La hora de inicio debe ser anterior a la hora de fin.")
+
+    def verificarSolapamiento(self, otraFranja: "FranjaHoraria") -> bool:
+        if self.__diaSemana.casefold() != otraFranja.diaSemana.casefold():
             return False
-        
-        return self._hora_inicio < otra_franja.hora_fin and otra_franja.hora_inicio < self._hora_fin
+        return (
+            self.__horaInicio < otraFranja.horaFin
+            and otraFranja.horaInicio < self.__horaFin
+        )

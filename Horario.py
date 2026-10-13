@@ -1,46 +1,66 @@
 from typing import List
+
 from FranjaHoraria import FranjaHoraria
 
+
 class Horario:
-    def __init__(self, id_horario: str, periodo_academico: str, tipo_horario: str):
-        self._id_horario: str = id_horario
-        self._periodo_academico: str = periodo_academico
-        self._tipo_horario: str = tipo_horario
-        
-        # Relación "se divide en" (1 a 1..*)
-        self._franjas_horarias: List[FranjaHoraria] = []
+    def __init__(self, idHorario: str, periodoAcademico: str, tipoHorario: str) -> None:
+        self.__idHorario = idHorario
+        self.__periodoAcademico = periodoAcademico
+        self.__tipoHorario = tipoHorario
+        self.__franjasHorarias: List[FranjaHoraria] = []
 
     @property
-    def id_horario(self) -> str:
-        return self._id_horario
+    def idHorario(self) -> str:
+        return self.__idHorario
+
+    @idHorario.setter
+    def idHorario(self, valor: str) -> None:
+        self.__idHorario = valor
 
     @property
-    def periodo_academico(self) -> str:
-        return self._periodo_academico
+    def periodoAcademico(self) -> str:
+        return self.__periodoAcademico
+
+    @periodoAcademico.setter
+    def periodoAcademico(self, valor: str) -> None:
+        self.__periodoAcademico = valor
 
     @property
-    def tipo_horario(self) -> str:
-        return self._tipo_horario
+    def tipoHorario(self) -> str:
+        return self.__tipoHorario
+
+    @tipoHorario.setter
+    def tipoHorario(self, valor: str) -> None:
+        self.__tipoHorario = valor
 
     @property
-    def franjas_horarias(self) -> List[FranjaHoraria]:
-        return self._franjas_horarias
+    def franjasHorarias(self) -> List[FranjaHoraria]:
+        return self.__franjasHorarias.copy()
 
-    def agregar_franja(self, franja: FranjaHoraria) -> None:
-        self._franjas_horarias.append(franja)
+    def agregarFranja(self, franja: FranjaHoraria) -> None:
+        if not isinstance(franja, FranjaHoraria):
+            raise TypeError("Solo se pueden agregar objetos FranjaHoraria.")
+        self.__franjasHorarias.append(franja)
 
-    def validar_conflictos(self) -> bool:
+    def validarConflictos(self) -> bool:
+        """Devuelve True cuando hay al menos dos franjas que se solapan."""
+        for indice, franja in enumerate(self.__franjasHorarias):
+            if any(
+                franja.verificarSolapamiento(otra)
+                for otra in self.__franjasHorarias[indice + 1 :]
+            ):
+                return True
+        return False
 
-        n = len(self._franjas_horarias)
-        for i in range(n):
-            for j in range(i + 1, n):
-                if self._franjas_horarias[i].verificar_solapamiento(self._franjas_horarias[j]):
-                    return True  # Hay conflicto
-        return False  # Sin conflictos
-
-    def generar_malla_horaria(self) -> str:
-
-        res = f"--- Malla Horaria: {self._id_horario} ({self._periodo_academico}) ---\n"
-        for franja in self._franjas_horarias:
-            res += f"- {franja.dia_semana}: {franja.hora_inicio.strftime('%H:%M')} - {franja.hora_fin.strftime('%H:%M')}\n"
-        return res
+    def generarMallaHoraria(self) -> str:
+        lineas = [
+            f"--- Malla Horaria: {self.__idHorario} ({self.__periodoAcademico}) ---"
+        ]
+        for franja in self.__franjasHorarias:
+            lineas.append(
+                f"- {franja.diaSemana}: "
+                f"{franja.horaInicio.strftime('%H:%M')} - "
+                f"{franja.horaFin.strftime('%H:%M')}"
+            )
+        return "\n".join(lineas)

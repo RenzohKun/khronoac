@@ -1,18 +1,36 @@
-from typing import TYPE_CHECKING
+from Asignatura import Asignatura
 from EspacioFisico import EspacioFisico
 
-if TYPE_CHECKING:
-    from Asignatura import Asignatura
 
 class Laboratorio(EspacioFisico):
-
-    def __init__(self, codigoAula: str, capacidadMaxima: int, equiposEspeciales: str,tipoLaboratorio: str,):
+    def __init__(
+        self,
+        codigoAula: str,
+        capacidadMaxima: int,
+        equiposEspeciales: str,
+        tipoLaboratorio: str,
+    ) -> None:
         super().__init__(codigoAula, capacidadMaxima)
-        self.equiposEspeciales: str = equiposEspeciales
-        self.tipoLaboratorio: str = tipoLaboratorio
+        self.__equiposEspeciales = equiposEspeciales
+        self.__tipoLaboratorio = tipoLaboratorio
 
-    def cumpleRequisitosDeAsignatura(self, asignatura: "Asignatura") -> bool:
+    @property
+    def equiposEspeciales(self) -> str:
+        return self.__equiposEspeciales
 
-        if hasattr(asignatura, "requiereLaboratorio"):
-            return asignatura.requiereLaboratorio()
-        return getattr(asignatura, "requiere_laboratorio", False)
+    @equiposEspeciales.setter
+    def equiposEspeciales(self, valor: str) -> None:
+        self.__equiposEspeciales = valor
+
+    @property
+    def tipoLaboratorio(self) -> str:
+        return self.__tipoLaboratorio
+
+    @tipoLaboratorio.setter
+    def tipoLaboratorio(self, valor: str) -> None:
+        self.__tipoLaboratorio = valor
+
+    def cumpleRequisitosDeAsignatura(self, asignatura: Asignatura) -> bool:
+        if not isinstance(asignatura, Asignatura):
+            raise TypeError("Se esperaba un objeto Asignatura.")
+        return asignatura.requiereLaboratorio()
