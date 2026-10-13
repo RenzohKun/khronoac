@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 
 class Persona(ABC):
 
-    def __init__(self, cedula: str, nombres: str, apellidos: str, correo_institucional: str,):
+    def __init__(self, cedula: str, nombres: str, apellidos: str, correoElectronico: str,):
         self._cedula: str = cedula
         self._nombres: str = nombres
         self._apellidos: str = apellidos
-        self._correo_institucional: str = correo_institucional
+        self._correoElectronico: str = correoElectronico
 
     @property
     def cedula(self) -> str:
@@ -22,12 +22,12 @@ class Persona(ABC):
 
     @property
     def correo_institucional(self) -> str:
-        return self._correo_institucional
+        return self._correoInstitucional
 
     @abstractmethod
-    def obtener_datos(self) -> str:
+    def obtenerDatos(self) -> str:
         pass
     
     @abstractmethod
-    def obtener_carga_academica(self) -> str:
+    def obtenerCargaAcademica(self) -> str:
         pass
