@@ -1,0 +1,16 @@
+[
+  {
+    "cedula": "1316100963",
+    "nombres": "Francis Joseph",
+    "apellidos": "Bailón Paredes",
+    "correoElectronico": "francisdes16@gmail.com",
+    "tituloAcademico": "Mgtr. en Software",
+    "diasDisponibles": [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes"
+    ]
+  }
+]

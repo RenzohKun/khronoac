@@ -1,0 +1,16 @@
+[
+  {
+    "codigoAula": "Aula-01",
+    "capacidadMaxima": 35,
+    "tipo": "Aula",
+    "tipoLaboratorio": "",
+    "equiposEspeciales": ""
+  },
+  {
+    "codigoAula": "Lab-Comp-01",
+    "capacidadMaxima": 30,
+    "tipo": "Laboratorio",
+    "tipoLaboratorio": "Redes",
+    "equiposEspeciales": "30 computadoras Core Ultra 7 con Python instalado"
+  }
+]

@@ -1,28 +1,26 @@
 from typing import List
+from Estudiante import Estudiante
+from Asignatura import Asignatura
 
-from Docente import Docente
-from FranjaHoraria import FranjaHoraria
-
-
-class AsistenteDocente(Docente):
+class AsistenteDocente(Estudiante):
     def __init__(
         self,
         cedula: str,
         nombres: str,
         apellidos: str,
         correoElectronico: str,
-        tituloAcademico: str = "",
+        tipoEstudiante: str = "Asistente",
         horasAsignadaAsistencia: int = 0,
         docenteApoya: str = "",
-        disponibilidad: List[FranjaHoraria] | None = None,
+        materiasInscritas: List[Asignatura] | None = None,
     ) -> None:
         super().__init__(
             cedula,
             nombres,
             apellidos,
             correoElectronico,
-            tituloAcademico,
-            disponibilidad,
+            tipoEstudiante,
+            materiasInscritas,
         )
         if horasAsignadaAsistencia < 0:
             raise ValueError("Las horas de asistencia no pueden ser negativas.")
@@ -56,5 +54,6 @@ class AsistenteDocente(Docente):
     def obtenerCargaAcademica(self) -> str:
         return (
             f"Asistencia a {self.__docenteApoya}: "
-            f"{self.__horasAsignadaAsistencia} horas"
+            f"{self.__horasAsignadaAsistencia} horas | "
+            f"Materias cursando: {len(self.materiasInscritas)}"
         )

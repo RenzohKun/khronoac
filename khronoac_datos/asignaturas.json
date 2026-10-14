@@ -1,0 +1,9 @@
+[
+  {
+    "nombreAsignatura": "Programacion Orientada a Objetos",
+    "horasRequeridas": 4,
+    "requiereLaboratorio": true,
+    "demandaEstimada": 28,
+    "docenteCedula": "1316100963"
+  }
+]

@@ -13,35 +13,50 @@ from typing import Any
 from Asignatura import Asignatura
 from Docente import Docente
 from EspacioFisico import EspacioFisico
+from Estudiante import Estudiante
 from FranjaHoraria import FranjaHoraria
 from Horario import Horario
 from Laboratorio import Laboratorio
+from Paralelo import Paralelo
 
 
 DIAS = ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes")
 HORA_INICIO = 7
 HORA_FIN = 20
-ARCHIVO_DATOS = Path(__file__).with_name("khronoac_datos.json")
+
+# Carpeta dedicada para almacenar los archivos JSON modulares
+CARPETA_DATOS = Path(__file__).with_name("khronoac_datos")
 
 
 def leer_datos() -> dict[str, Any]:
-    if not ARCHIVO_DATOS.exists():
-        return {"docentes": [], "asignaturas": [], "espacios": [], "ultimoHorario": None}
+    CARPETA_DATOS.mkdir(parents=True, exist_ok=True)
+    
+    return {
+        "docentes": _leer_seccion("docentes", []),
+        "asignaturas": _leer_seccion("asignaturas", []),
+        "espacios": _leer_seccion("espacios", []),
+        "ultimoHorario": _leer_seccion("horario", None),
+    }
+
+
+def _leer_seccion(nombre: str, por_defecto: Any) -> Any:
+    archivo = CARPETA_DATOS / f"{nombre}.json"
+    if not archivo.exists():
+        return por_defecto
     try:
-        with ARCHIVO_DATOS.open("r", encoding="utf-8") as archivo:
-            datos = json.load(archivo)
-        return {
-            "docentes": datos.get("docentes", []),
-            "asignaturas": datos.get("asignaturas", []),
-            "espacios": datos.get("espacios", []),
-            "ultimoHorario": datos.get("ultimoHorario"),
-        }
-    except (OSError, json.JSONDecodeError) as error:
-        messagebox.showerror(
-            "No se pudieron leer los datos",
-            f"El archivo {ARCHIVO_DATOS.name} no se pudo cargar.\n{error}",
-        )
-        return {"docentes": [], "asignaturas": [], "espacios": [], "ultimoHorario": None}
+        with archivo.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return por_defecto
+
+
+def _guardar_seccion(nombre: str, contenido: Any) -> None:
+    CARPETA_DATOS.mkdir(parents=True, exist_ok=True)
+    archivo = CARPETA_DATOS / f"{nombre}.json"
+    temporal = CARPETA_DATOS / f"{nombre}.tmp"
+    with temporal.open("w", encoding="utf-8") as f:
+        json.dump(contenido, f, ensure_ascii=False, indent=2)
+    temporal.replace(archivo)
 
 
 class KhronoacApp(tk.Tk):
@@ -258,10 +273,10 @@ class KhronoacApp(tk.Tk):
         ttk.Label(self.tab_horario, textvariable=self.estado_horario, style="Subtitle.TLabel", wraplength=1000).pack(anchor="w", pady=(10, 0))
 
     def _guardar_archivo(self) -> None:
-        temporal = ARCHIVO_DATOS.with_suffix(".tmp")
-        with temporal.open("w", encoding="utf-8") as archivo:
-            json.dump(self.datos, archivo, ensure_ascii=False, indent=2)
-        temporal.replace(ARCHIVO_DATOS)
+        _guardar_seccion("docentes", self.datos["docentes"])
+        _guardar_seccion("asignaturas", self.datos["asignaturas"])
+        _guardar_seccion("espacios", self.datos["espacios"])
+        _guardar_seccion("horario", self.datos["ultimoHorario"])  # Guarda en horario.json
 
     def _invalidar_plan(self) -> None:
         self.plan_actual = None
@@ -560,7 +575,6 @@ class KhronoacApp(tk.Tk):
             messagebox.showwarning("Mínimo inválido", "El mínimo por paralelo debe ser un entero mayor que cero.")
             return
 
-        # El plan previo podría incumplir el nuevo mínimo o los datos actuales.
         self._invalidar_plan()
         self._guardar_archivo()
         self._mostrar_plan_guardado()
@@ -577,15 +591,22 @@ class KhronoacApp(tk.Tk):
             if docente is None:
                 problemas.append(f"{asignatura.nombreAsignatura}: el docente registrado ya no existe.")
                 continue
-            espacios_validos = [
-                (clave, espacio) for clave, espacio in espacios.items()
-                if espacio.capacidadMaxima >= minimo
-                and (not asignatura.requiereLaboratorio() or isinstance(espacio, Laboratorio))
-            ]
+
+            espacios_validos = []
+            for clave, espacio in espacios.items():
+                if espacio.capacidadMaxima < minimo:
+                    continue
+                if asignatura.requiereLaboratorio():
+                    if isinstance(espacio, Laboratorio) and espacio.cumpleRequisitosDeAsignatura(asignatura):
+                        espacios_validos.append((clave, espacio))
+                else:
+                    espacios_validos.append((clave, espacio))
+
             if not espacios_validos:
                 tipo = "laboratorio" if asignatura.requiereLaboratorio() else "aula"
                 problemas.append(f"{asignatura.nombreAsignatura}: no hay {tipo} con capacidad de al menos {minimo}.")
                 continue
+
             demanda = int(registro["demandaEstimada"])
             capacidad_maxima = max(espacio.capacidadMaxima for _, espacio in espacios_validos)
             cantidad_paralelos = math.ceil(demanda / capacidad_maxima)
@@ -598,19 +619,36 @@ class KhronoacApp(tk.Tk):
                     f"y mínimo {minimo}, no se pueden formar paralelos válidos."
                 )
                 continue
+
             if not any(docente.verificarDisponibilidad(FranjaHoraria(dia, time(HORA_INICIO), time(HORA_INICIO + 1))) for dia in DIAS):
                 problemas.append(f"{asignatura.nombreAsignatura}: su docente no tiene disponibilidad en días laborables.")
                 continue
+
             for indice, cantidad in enumerate(tamanos, start=1):
+                nombre_p = f"{asignatura.nombreAsignatura} - {indice}"
+                
+                paralelo_obj = Paralelo(nombre_p, capacidad_maxima, asignatura)
+                for est_id in range(1, cantidad + 1):
+                    alumno_temporal = Estudiante(
+                        f"EST-{asignatura.nombreAsignatura[:3]}-{indice}-{est_id:03d}",
+                        f"Estudiante {est_id}",
+                        f"Paralelo {indice}",
+                        f"estudiante{est_id}@uleam.edu.ec"
+                    )
+                    paralelo_obj.agregarEstudiante(alumno_temporal)
+
                 seccion = {
                     "asignatura": asignatura.nombreAsignatura,
-                    "nombreParalelo": f"{asignatura.nombreAsignatura} - {indice}",
-                    "numero": indice, "demanda": cantidad, "cupoMaximo": capacidad_maxima,
+                    "nombreParalelo": paralelo_obj.nombreParalelo,
+                    "numero": indice,
+                    "demanda": paralelo_obj.calcularDemanda(),
+                    "cupoMaximo": paralelo_obj.cupoMaximo,
                     "docenteCedula": registro["docenteCedula"],
                     "horas": asignatura.obtenerHorasTotales(),
                     "requiereLaboratorio": asignatura.requiereLaboratorio(),
                 }
                 secciones.append(seccion)
+
                 for numero_hora in range(1, asignatura.obtenerHorasTotales() + 1):
                     candidatos = []
                     for dia in DIAS:
@@ -751,7 +789,7 @@ class KhronoacApp(tk.Tk):
         if not self.plan_actual or not self.plan_actual.get("sesiones"):
             messagebox.showinfo("Sin horario", "Genera un horario antes de exportarlo.")
             return
-        archivo = ARCHIVO_DATOS.with_name("horario_generado.json")
+        archivo = CARPETA_DATOS / "horario_exportado.json"
         with archivo.open("w", encoding="utf-8") as salida:
             json.dump(self.plan_actual, salida, ensure_ascii=False, indent=2)
         messagebox.showinfo("Horario exportado", f"Se guardó el horario en:\n{archivo}")
