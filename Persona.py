@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class Persona(ABC):
-    """Clase abstracta con los datos comunes de las personas del sistema."""
 
     def __init__(self, cedula: str, nombres: str, apellidos: str, correoElectronico: str) -> None:
         self.__cedula = cedula
