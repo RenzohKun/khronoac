@@ -6,7 +6,17 @@
       "numero": 1,
       "demanda": 28,
       "cupoMaximo": 30,
-      "docenteCedula": "1316100963",
+      "docenteCedula": "1316556354",
+      "horas": 4,
+      "requiereLaboratorio": true
+    },
+    {
+      "asignatura": "Redes del computador",
+      "nombreParalelo": "Redes del computador - 1",
+      "numero": 1,
+      "demanda": 30,
+      "cupoMaximo": 30,
+      "docenteCedula": "1316556354",
       "horas": 4,
       "requiereLaboratorio": true
     }
@@ -20,7 +30,7 @@
       "paralelo": "Programacion Orientada a Objetos - 1",
       "numeroParalelo": 1,
       "estudiantes": 28,
-      "docente": "1316100963",
+      "docente": "1316556354",
       "espacio": "Lab-Comp-01"
     },
     {
@@ -31,7 +41,7 @@
       "paralelo": "Programacion Orientada a Objetos - 1",
       "numeroParalelo": 1,
       "estudiantes": 28,
-      "docente": "1316100963",
+      "docente": "1316556354",
       "espacio": "Lab-Comp-01"
     },
     {
@@ -42,7 +52,7 @@
       "paralelo": "Programacion Orientada a Objetos - 1",
       "numeroParalelo": 1,
       "estudiantes": 28,
-      "docente": "1316100963",
+      "docente": "1316556354",
       "espacio": "Lab-Comp-01"
     },
     {
@@ -53,7 +63,51 @@
       "paralelo": "Programacion Orientada a Objetos - 1",
       "numeroParalelo": 1,
       "estudiantes": 28,
-      "docente": "1316100963",
+      "docente": "1316556354",
+      "espacio": "Lab-Comp-01"
+    },
+    {
+      "dia": "Lunes",
+      "inicio": "11:00",
+      "fin": "12:00",
+      "asignatura": "Redes del computador",
+      "paralelo": "Redes del computador - 1",
+      "numeroParalelo": 1,
+      "estudiantes": 30,
+      "docente": "1316556354",
+      "espacio": "Lab-Comp-01"
+    },
+    {
+      "dia": "Lunes",
+      "inicio": "12:00",
+      "fin": "13:00",
+      "asignatura": "Redes del computador",
+      "paralelo": "Redes del computador - 1",
+      "numeroParalelo": 1,
+      "estudiantes": 30,
+      "docente": "1316556354",
+      "espacio": "Lab-Comp-01"
+    },
+    {
+      "dia": "Lunes",
+      "inicio": "13:00",
+      "fin": "14:00",
+      "asignatura": "Redes del computador",
+      "paralelo": "Redes del computador - 1",
+      "numeroParalelo": 1,
+      "estudiantes": 30,
+      "docente": "1316556354",
+      "espacio": "Lab-Comp-01"
+    },
+    {
+      "dia": "Lunes",
+      "inicio": "14:00",
+      "fin": "15:00",
+      "asignatura": "Redes del computador",
+      "paralelo": "Redes del computador - 1",
+      "numeroParalelo": 1,
+      "estudiantes": 30,
+      "docente": "1316556354",
       "espacio": "Lab-Comp-01"
     }
   ],

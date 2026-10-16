@@ -327,36 +327,96 @@ class KhronoacApp(tk.Tk):
         self._mostrar_plan_guardado()
 
     def _guardar_docente(self) -> None:
-        cedula, nombres, apellidos = self.doc_cedula.get().strip(), self.doc_nombres.get().strip(), self.doc_apellidos.get().strip()
+        cedula = self.doc_cedula.get().strip()
+        nombres = self.doc_nombres.get().strip()
+        apellidos = self.doc_apellidos.get().strip()
+
         if not all((cedula, nombres, apellidos)):
-            messagebox.showwarning("Datos incompletos", "Cédula, nombres y apellidos son obligatorios.")
+            messagebox.showwarning(
+                "Datos incompletos",
+                "Cédula, nombres y apellidos son obligatorios."
+            )
             return
-        dias = [dia for dia, variable in self.docente_dias_vars.items() if variable.get()]
+
+        dias = [
+            dia for dia, variable in self.docente_dias_vars.items()
+            if variable.get()
+        ]
+
         if not dias:
-            messagebox.showwarning("Disponibilidad requerida", "Selecciona al menos un día disponible.")
+            messagebox.showwarning(
+                "Disponibilidad requerida",
+                "Selecciona al menos un día disponible."
+            )
             return
+
+        clave_anterior = self.docente_editando
+
+        indice_nuevo = self._indice_por_clave(
+            self.datos["docentes"], "cedula", cedula
+        )
+
+        # Si es un docente nuevo, comprobar que no exista su cédula.
+        if clave_anterior is None and indice_nuevo is not None:
+            messagebox.showwarning(
+                "Identificador duplicado",
+                "Ya existe otro docente con esa cédula."
+            )
+            return
+
         docente = {
-            "cedula": cedula, "nombres": nombres, "apellidos": apellidos,
+            "cedula": cedula,
+            "nombres": nombres,
+            "apellidos": apellidos,
             "correoElectronico": self.doc_correo.get().strip(),
-            "tituloAcademico": self.doc_titulo.get().strip(), "diasDisponibles": dias,
+            "tituloAcademico": self.doc_titulo.get().strip(),
+            "diasDisponibles": dias,
         }
-        clave_anterior = self.docente_editando or cedula
-        existente = self._indice_por_clave(self.datos["docentes"], "cedula", clave_anterior)
-        if cedula != clave_anterior and self._indice_por_clave(self.datos["docentes"], "cedula", cedula) is not None:
-            messagebox.showwarning("Identificador duplicado", "Ya existe otro docente con esa cédula.")
-            return
-        if existente is None:
+
+        if clave_anterior is None:
+            
             self.datos["docentes"].append(docente)
+
         else:
-            self.datos["docentes"][existente] = docente
+            
+            indice_anterior = self._indice_por_clave(
+                self.datos["docentes"], "cedula", clave_anterior
+            )
+
+            if indice_anterior is None:
+                messagebox.showerror(
+                    "Error",
+                    "No se encontró el docente que intentas editar."
+                )
+                return
+
+            # Evitar usar la cédula de otro docente.
+            if indice_nuevo is not None and cedula != clave_anterior:
+                messagebox.showwarning(
+                    "Identificador duplicado",
+                    "Esa cédula ya pertenece a otro docente."
+                )
+                return
+
+            self.datos["docentes"][indice_anterior] = docente
+
+            # Actualizar las asignaturas si cambió la cédula.
             if cedula != clave_anterior:
                 for asignatura in self.datos["asignaturas"]:
                     if asignatura["docenteCedula"] == clave_anterior:
                         asignatura["docenteCedula"] = cedula
+
         self._invalidar_plan()
         self._guardar_archivo()
+
+        # Limpiar el formulario y salir del modo edición.
         self._limpiar_docente()
         self._refrescar_listas()
+
+        messagebox.showinfo(
+            "Éxito",
+            "Docente guardado correctamente."
+        )
 
     def _seleccionar_docente(self, _evento: tk.Event) -> None:
         seleccion = self.tree_docentes.selection()
