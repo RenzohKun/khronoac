@@ -62,10 +62,14 @@ def _guardar_seccion(nombre: str, contenido: Any) -> None:
 class KhronoacApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        self.title("Khronoac | Gestión académica de horarios")
-        self.geometry("1120x760")
-        self.minsize(900, 620)
-        self.configure(bg="#f3f5f9")
+        self.title("Khronoac — Planificador de Horarios Académicos")
+        self.geometry("1200x780")
+        self.minsize(960, 640)
+        self.configure(bg="#0f1623")
+        try:
+            self.iconbitmap(str(Path(__file__).with_name("khronoac_icon.ico")))
+        except Exception:
+            pass
 
         self.datos = leer_datos()
         self.docente_por_etiqueta: dict[str, str] = {}
@@ -86,41 +90,174 @@ class KhronoacApp(tk.Tk):
             estilo.theme_use("clam")
         except tk.TclError:
             pass
-        estilo.configure("TFrame", background="#f3f5f9")
-        estilo.configure("Card.TFrame", background="white")
-        estilo.configure("TLabel", background="#f3f5f9", foreground="#172033", font=("Segoe UI", 10))
-        estilo.configure("Title.TLabel", font=("Segoe UI", 20, "bold"), foreground="#12233f")
-        estilo.configure("Subtitle.TLabel", foreground="#58657a")
-        estilo.configure("Card.TLabel", background="white")
-        estilo.configure("TButton", padding=(11, 7), font=("Segoe UI", 9, "bold"))
-        estilo.configure("Accent.TButton", background="#2457c5", foreground="white")
-        estilo.map("Accent.TButton", background=[("active", "#17429c")])
-        estilo.configure("Treeview", rowheight=27, font=("Segoe UI", 9))
-        estilo.configure("Treeview.Heading", font=("Segoe UI", 9, "bold"))
-        estilo.configure("TNotebook", background="#f3f5f9", borderwidth=0)
-        estilo.configure("TNotebook.Tab", padding=(14, 9), font=("Segoe UI", 9, "bold"))
+
+        # ── Colores base ──────────────────────────────────────────────────
+        BG          = "#0f1623"   # fondo principal oscuro
+        CARD        = "#1a2233"   # fondo de tarjetas/paneles
+        CARD_BORDER = "#243047"   # borde sutil de tarjetas
+        FG          = "#e8edf5"   # texto principal
+        FG_MUTED    = "#7a8faa"   # texto secundario
+        ACCENT      = "#3b82f6"   # azul brillante primario
+        ACCENT_HOV  = "#2563eb"   # hover del acento
+        ACCENT2     = "#6366f1"   # índigo para variaciones
+        HEADING_FG  = "#c7d8f0"   # encabezados de columna
+        ROW_ODD     = "#1a2233"
+        ROW_EVEN    = "#151e2d"
+        SEL_BG      = "#1e3a5f"
+        SEL_FG      = "#ffffff"
+
+        estilo.configure("TFrame",           background=BG)
+        estilo.configure("Card.TFrame",       background=CARD,    relief="flat",  borderwidth=1)
+        estilo.configure("TLabel",            background=BG,      foreground=FG,  font=("Segoe UI", 10))
+        estilo.configure("Title.TLabel",      background=BG,      foreground=FG,  font=("Segoe UI", 22, "bold"))
+        estilo.configure("Subtitle.TLabel",   background=BG,      foreground=FG_MUTED, font=("Segoe UI", 9))
+        estilo.configure("Card.TLabel",       background=CARD,    foreground=FG,  font=("Segoe UI", 9))
+        estilo.configure("CardHead.TLabel",   background=CARD,    foreground=HEADING_FG, font=("Segoe UI", 9, "bold"))
+
+        estilo.configure("TButton",
+                         padding=(13, 8),
+                         font=("Segoe UI", 9, "bold"),
+                         background=CARD_BORDER,
+                         foreground=FG,
+                         relief="flat",
+                         borderwidth=0)
+        estilo.map("TButton",
+                   background=[("active", "#2e3f5a")],
+                   foreground=[("active", "#ffffff")])
+
+        estilo.configure("Accent.TButton",
+                         background=ACCENT,
+                         foreground="#ffffff",
+                         padding=(14, 8),
+                         font=("Segoe UI", 9, "bold"),
+                         relief="flat",
+                         borderwidth=0)
+        estilo.map("Accent.TButton",
+                   background=[("active", ACCENT_HOV)],
+                   foreground=[("active", "#ffffff")])
+
+        estilo.configure("Danger.TButton",
+                         background="#7f1d1d",
+                         foreground="#fca5a5",
+                         padding=(12, 7),
+                         font=("Segoe UI", 9, "bold"),
+                         relief="flat",
+                         borderwidth=0)
+        estilo.map("Danger.TButton",
+                   background=[("active", "#991b1b")],
+                   foreground=[("active", "#ffffff")])
+
+        estilo.configure("Treeview",
+                         background=ROW_ODD,
+                         foreground=FG,
+                         fieldbackground=ROW_ODD,
+                         rowheight=30,
+                         font=("Segoe UI", 9),
+                         borderwidth=0,
+                         relief="flat")
+        estilo.configure("Treeview.Heading",
+                         background=CARD_BORDER,
+                         foreground=HEADING_FG,
+                         font=("Segoe UI", 9, "bold"),
+                         relief="flat",
+                         padding=(6, 6))
+        estilo.map("Treeview",
+                   background=[("selected", SEL_BG)],
+                   foreground=[("selected", SEL_FG)])
+        estilo.map("Treeview.Heading",
+                   background=[("active", ACCENT2)])
+
+        estilo.configure("TNotebook",
+                         background=BG,
+                         borderwidth=0,
+                         tabmargins=(0, 0, 0, 0))
+        estilo.configure("TNotebook.Tab",
+                         background=CARD,
+                         foreground=FG_MUTED,
+                         padding=(18, 10),
+                         font=("Segoe UI", 9, "bold"),
+                         borderwidth=0)
+        estilo.map("TNotebook.Tab",
+                   background=[("selected", BG),       ("active", "#1e2d45")],
+                   foreground=[("selected", ACCENT),   ("active", FG)])
+
+        estilo.configure("TScrollbar",
+                         background=CARD_BORDER,
+                         troughcolor=BG,
+                         borderwidth=0,
+                         arrowsize=12)
+        estilo.map("TScrollbar",
+                   background=[("active", ACCENT2)])
+
+        estilo.configure("TEntry",
+                         fieldbackground="#0d1520",
+                         foreground=FG,
+                         insertcolor=ACCENT,
+                         borderwidth=1,
+                         relief="flat",
+                         padding=(6, 5))
+        estilo.configure("TCombobox",
+                         fieldbackground="#0d1520",
+                         foreground=FG,
+                         background=CARD_BORDER,
+                         borderwidth=1,
+                         relief="flat",
+                         padding=(6, 5))
+        estilo.map("TCombobox",
+                   fieldbackground=[("readonly", "#0d1520")],
+                   foreground=[("readonly", FG)])
+
+        estilo.configure("TSpinbox",
+                         fieldbackground="#0d1520",
+                         foreground=FG,
+                         background=CARD_BORDER,
+                         borderwidth=1,
+                         relief="flat",
+                         padding=(4, 4))
+
+        estilo.configure("TCheckbutton",
+                         background=CARD,
+                         foreground=FG,
+                         font=("Segoe UI", 9))
+        estilo.map("TCheckbutton",
+                   background=[("active", CARD)],
+                   foreground=[("active", "#ffffff")])
 
     def _construir_interfaz(self) -> None:
-        encabezado = ttk.Frame(self, padding=(22, 18, 22, 12))
+        encabezado = ttk.Frame(self, padding=(28, 20, 28, 14))
         encabezado.pack(fill="x")
-        ttk.Label(encabezado, text="Khronoac", style="Title.TLabel").pack(anchor="w")
+
+        fila_titulo = ttk.Frame(encabezado)
+        fila_titulo.pack(fill="x")
+        ttk.Label(fila_titulo, text="🗓  Khronoac", style="Title.TLabel").pack(side="left")
+        ttk.Label(
+            fila_titulo,
+            text="v1.0",
+            foreground="#3b82f6",
+            background="#0f1623",
+            font=("Segoe UI", 9, "bold"),
+        ).pack(side="left", padx=(10, 0), pady=(8, 0))
+
         ttk.Label(
             encabezado,
-            text="Registra recursos académicos y genera una propuesta de horarios sin conflictos.",
+            text="Gestión de recursos académicos · Generación automática de horarios sin conflictos",
             style="Subtitle.TLabel",
-        ).pack(anchor="w", pady=(3, 0))
+        ).pack(anchor="w", pady=(4, 0))
+
+        sep = tk.Frame(self, height=1, bg="#1e3054")
+        sep.pack(fill="x", padx=0, pady=(2, 0))
 
         self.notebook = ttk.Notebook(self)
-        self.notebook.pack(fill="both", expand=True, padx=18, pady=(0, 16))
+        self.notebook.pack(fill="both", expand=True, padx=20, pady=(10, 14))
 
-        self.tab_docentes = ttk.Frame(self.notebook, padding=14)
-        self.tab_asignaturas = ttk.Frame(self.notebook, padding=14)
-        self.tab_espacios = ttk.Frame(self.notebook, padding=14)
-        self.tab_horario = ttk.Frame(self.notebook, padding=14)
-        self.notebook.add(self.tab_docentes, text="Docentes")
-        self.notebook.add(self.tab_asignaturas, text="Asignaturas")
-        self.notebook.add(self.tab_espacios, text="Aulas y laboratorios")
-        self.notebook.add(self.tab_horario, text="Planificar horario")
+        self.tab_docentes = ttk.Frame(self.notebook, padding=16)
+        self.tab_asignaturas = ttk.Frame(self.notebook, padding=16)
+        self.tab_espacios = ttk.Frame(self.notebook, padding=16)
+        self.tab_horario = ttk.Frame(self.notebook, padding=16)
+        self.notebook.add(self.tab_docentes,   text="  👤  Docentes  ")
+        self.notebook.add(self.tab_asignaturas, text="  📚  Asignaturas  ")
+        self.notebook.add(self.tab_espacios,   text="  🏫  Aulas y Laboratorios  ")
+        self.notebook.add(self.tab_horario,    text="  🗓  Planificar Horario  ")
 
         self._construir_tab_docentes()
         self._construir_tab_asignaturas()
@@ -174,7 +311,7 @@ class KhronoacApp(tk.Tk):
 
         dias = ttk.Frame(formulario, style="Card.TFrame")
         dias.grid(row=1, column=0, columnspan=5, sticky="w", pady=(8, 3))
-        ttk.Label(dias, text="Disponibilidad semanal (07:00–20:00):", style="Card.TLabel").pack(side="left", padx=(0, 12))
+        ttk.Label(dias, text="Disponibilidad semanal  (07:00 – 20:00):", style="Card.TLabel").pack(side="left", padx=(0, 14))
         for dia in DIAS:
             variable = tk.BooleanVar(value=True)
             self.docente_dias_vars[dia] = variable
@@ -182,14 +319,14 @@ class KhronoacApp(tk.Tk):
 
         acciones = ttk.Frame(formulario, style="Card.TFrame")
         acciones.grid(row=2, column=0, columnspan=5, sticky="e", pady=(8, 0))
-        ttk.Button(acciones, text="Guardar docente", style="Accent.TButton", command=self._guardar_docente).pack(side="left", padx=4)
-        ttk.Button(acciones, text="Limpiar", command=self._limpiar_docente).pack(side="left", padx=4)
+        ttk.Button(acciones, text="  ✔  Guardar docente", style="Accent.TButton", command=self._guardar_docente).pack(side="left", padx=5)
+        ttk.Button(acciones, text="  ✕  Limpiar", command=self._limpiar_docente).pack(side="left", padx=5)
 
         columnas = (("cedula", "Identificador", 120), ("nombre", "Docente", 220),
                     ("correo", "Correo", 220), ("titulo", "Título", 180), ("dias", "Días disponibles", 250))
         self.tree_docentes = self._crear_tree(self.tab_docentes, columnas)
         self.tree_docentes.bind("<<TreeviewSelect>>", self._seleccionar_docente)
-        ttk.Button(self.tab_docentes, text="Eliminar seleccionado", command=self._eliminar_docente).pack(anchor="e", pady=(8, 0))
+        ttk.Button(self.tab_docentes, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self._eliminar_docente).pack(anchor="e", pady=(10, 2))
 
     def _construir_tab_asignaturas(self) -> None:
         formulario = ttk.Frame(self.tab_asignaturas, style="Card.TFrame", padding=12)
@@ -212,14 +349,14 @@ class KhronoacApp(tk.Tk):
         ttk.Checkbutton(formulario, text="Requiere laboratorio", variable=self.asig_laboratorio).grid(row=1, column=0, sticky="w", pady=7)
         acciones = ttk.Frame(formulario, style="Card.TFrame")
         acciones.grid(row=1, column=1, columnspan=3, sticky="e", pady=5)
-        ttk.Button(acciones, text="Guardar asignatura", style="Accent.TButton", command=self._guardar_asignatura).pack(side="left", padx=4)
-        ttk.Button(acciones, text="Limpiar", command=self._limpiar_asignatura).pack(side="left", padx=4)
+        ttk.Button(acciones, text="  ✔  Guardar asignatura", style="Accent.TButton", command=self._guardar_asignatura).pack(side="left", padx=5)
+        ttk.Button(acciones, text="  ✕  Limpiar", command=self._limpiar_asignatura).pack(side="left", padx=5)
 
         columnas = (("nombre", "Asignatura", 220), ("horas", "Horas/semana", 110),
                     ("demanda", "Demanda estimada", 140), ("docente", "Docente", 220), ("lab", "Laboratorio", 110))
         self.tree_asignaturas = self._crear_tree(self.tab_asignaturas, columnas)
         self.tree_asignaturas.bind("<<TreeviewSelect>>", self._seleccionar_asignatura)
-        ttk.Button(self.tab_asignaturas, text="Eliminar seleccionado", command=self._eliminar_asignatura).pack(anchor="e", pady=(8, 0))
+        ttk.Button(self.tab_asignaturas, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self._eliminar_asignatura).pack(anchor="e", pady=(10, 2))
 
     def _construir_tab_espacios(self) -> None:
         formulario = ttk.Frame(self.tab_espacios, style="Card.TFrame", padding=12)
@@ -243,28 +380,28 @@ class KhronoacApp(tk.Tk):
         ttk.Label(formulario, text="Los datos de laboratorio solo se usan cuando el tipo es Laboratorio.", style="Card.TLabel").grid(row=1, column=1, columnspan=2, sticky="w")
         acciones = ttk.Frame(formulario, style="Card.TFrame")
         acciones.grid(row=1, column=3, sticky="e", pady=5)
-        ttk.Button(acciones, text="Guardar espacio", style="Accent.TButton", command=self._guardar_espacio).pack(side="left", padx=4)
-        ttk.Button(acciones, text="Limpiar", command=self._limpiar_espacio).pack(side="left", padx=4)
+        ttk.Button(acciones, text="  ✔  Guardar espacio", style="Accent.TButton", command=self._guardar_espacio).pack(side="left", padx=5)
+        ttk.Button(acciones, text="  ✕  Limpiar", command=self._limpiar_espacio).pack(side="left", padx=5)
 
         columnas = (("codigo", "Código", 150), ("tipo", "Tipo", 140),
                     ("capacidad", "Capacidad", 110), ("detalle", "Equipamiento / tipo", 360))
         self.tree_espacios = self._crear_tree(self.tab_espacios, columnas)
         self.tree_espacios.bind("<<TreeviewSelect>>", self._seleccionar_espacio)
-        ttk.Button(self.tab_espacios, text="Eliminar seleccionado", command=self._eliminar_espacio).pack(anchor="e", pady=(8, 0))
+        ttk.Button(self.tab_espacios, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self._eliminar_espacio).pack(anchor="e", pady=(10, 2))
 
     def _construir_tab_horario(self) -> None:
         controles = ttk.Frame(self.tab_horario, style="Card.TFrame", padding=12)
         controles.pack(fill="x", pady=(0, 12))
-        ttk.Label(controles, text="Mínimo de estudiantes por paralelo", style="Card.TLabel").pack(side="left")
+        ttk.Label(controles, text="Mínimo de estudiantes por paralelo:", style="Card.TLabel").pack(side="left")
         self.minimo_var = tk.StringVar(value="10")
         ttk.Spinbox(controles, from_=1, to=200, textvariable=self.minimo_var, width=7).pack(side="left", padx=10)
-        ttk.Button(controles, text="Generar horario", style="Accent.TButton", command=self._generar_horario).pack(side="left", padx=8)
-        ttk.Button(controles, text="Exportar horario JSON", command=self._exportar_horario).pack(side="left", padx=8)
+        ttk.Button(controles, text="  ▶  Generar horario", style="Accent.TButton", command=self._generar_horario).pack(side="left", padx=8)
+        ttk.Button(controles, text="  ↓  Exportar JSON", command=self._exportar_horario).pack(side="left", padx=6)
         ttk.Label(
             self.tab_horario,
-            text="Cada hora requerida se planifica como un bloque de 60 minutos entre 07:00 y 20:00, de lunes a viernes.",
+            text="Cada hora se planifica como un bloque de 60 min · Lunes a Viernes · 07:00 – 20:00 · Sin conflictos de docente, aula o paralelo.",
             style="Subtitle.TLabel",
-        ).pack(anchor="w", pady=(0, 8))
+        ).pack(anchor="w", pady=(6, 10))
         columnas = (("dia", "Día", 100), ("inicio", "Inicio", 75), ("fin", "Fin", 75),
                     ("asignatura", "Asignatura", 180), ("paralelo", "Paralelo", 90),
                     ("demanda", "Estudiantes", 90), ("docente", "Docente", 180), ("espacio", "Aula / laboratorio", 150))
