@@ -1,6 +1,7 @@
 from typing import List
-from Estudiante import Estudiante
-from Asignatura import Asignatura
+
+from modelos.Estudiante import Estudiante
+from modelos.Asignatura import Asignatura
 
 class AsistenteDocente(Estudiante):
     def __init__(

@@ -1,5 +1,5 @@
-from Asignatura import Asignatura
-from EspacioFisico import EspacioFisico
+from modelos.Asignatura import Asignatura
+from modelos.EspacioFisico import EspacioFisico
 
 
 class Laboratorio(EspacioFisico):

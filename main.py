@@ -10,14 +10,14 @@ from pathlib import Path
 from tkinter import messagebox, ttk
 from typing import Any
 
-from Asignatura import Asignatura
-from Docente import Docente
-from EspacioFisico import EspacioFisico
-from Estudiante import Estudiante
-from FranjaHoraria import FranjaHoraria
-from Horario import Horario
-from Laboratorio import Laboratorio
-from Paralelo import Paralelo
+from modelos.Asignatura import Asignatura
+from modelos.Docente import Docente
+from modelos.EspacioFisico import EspacioFisico
+from modelos.Estudiante import Estudiante
+from modelos.FranjaHoraria import FranjaHoraria
+from modelos.Horario import Horario
+from modelos.Laboratorio import Laboratorio
+from modelos.Paralelo import Paralelo
 
 
 DIAS = ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes")
