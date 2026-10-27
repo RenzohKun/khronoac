@@ -1,6 +1,11 @@
-from typing import List
+from __future__ import annotations
+from typing import List, TYPE_CHECKING
 
 from modelos.FranjaHoraria import FranjaHoraria
+
+if TYPE_CHECKING:
+    from modelos.Asignatura import Asignatura
+
 
 class EspacioFisico:
     def __init__(self, codigoAula: str, capacidadMaxima: int) -> None:
@@ -56,3 +61,16 @@ class EspacioFisico:
             return False
         self.__franjasOcupadas.remove(franja)
         return True
+
+    def esAptoParaAsignatura(self, asignatura: Asignatura) -> bool:
+        """Contrato base (LSP): Un aula física es apta si la asignatura NO exige laboratorio."""
+        return not asignatura.requiereLaboratorio()
+
+def esAptoParaAsignatura(self, asignatura: Asignatura) -> bool:
+    return not asignatura.requiereLaboratorio()
+
+def esAptoParaAsignatura(self, asignatura: Asignatura) -> bool:
+    return asignatura.requiereLaboratorio()
+
+    if espacio.esAptoParaAsignatura(asignatura):
+        espacios_validos.append((clave, espacio))

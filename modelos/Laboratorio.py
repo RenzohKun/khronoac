@@ -30,7 +30,8 @@ class Laboratorio(EspacioFisico):
     def tipoLaboratorio(self, valor: str) -> None:
         self.__tipoLaboratorio = valor
 
-    def cumpleRequisitosDeAsignatura(self, asignatura: Asignatura) -> bool:
+    def esAptoParaAsignatura(self, asignatura: Asignatura) -> bool:
+        """Sobrescribe el contrato del padre (LSP): Apto únicamente si la asignatura requiere laboratorio."""
         if not isinstance(asignatura, Asignatura):
             raise TypeError("Se esperaba un objeto Asignatura.")
         return asignatura.requiereLaboratorio()
