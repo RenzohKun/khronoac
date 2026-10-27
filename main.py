@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import math
 import tkinter as tk
 from datetime import time
@@ -16,46 +15,12 @@ from modelos.FranjaHoraria import FranjaHoraria
 from modelos.Horario import Horario
 from modelos.Laboratorio import Laboratorio
 from modelos.Paralelo import Paralelo
+from persistencia import KhronoacPersistenciaDatos
 
 
 DIAS = ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes")
 HORA_INICIO = 7
 HORA_FIN = 20
-
-# Carpeta dedicada para almacenar los archivos JSON modulares
-CARPETA_DATOS = Path(__file__).with_name("khronoac_datos")
-
-
-def leer_datos() -> dict[str, Any]:
-    CARPETA_DATOS.mkdir(parents=True, exist_ok=True)
-    
-    return {
-        "docentes": _leer_seccion("docentes", []),
-        "asignaturas": _leer_seccion("asignaturas", []),
-        "espacios": _leer_seccion("espacios", []),
-        "ultimoHorario": _leer_seccion("horario", None),
-    }
-
-
-def _leer_seccion(nombre: str, por_defecto: Any) -> Any:
-    archivo = CARPETA_DATOS / f"{nombre}.json"
-    if not archivo.exists():
-        return por_defecto
-    try:
-        with archivo.open("r", encoding="utf-8") as f:
-            return json.load(f)
-    except (OSError, json.JSONDecodeError):
-        return por_defecto
-
-
-def _guardar_seccion(nombre: str, contenido: Any) -> None:
-    CARPETA_DATOS.mkdir(parents=True, exist_ok=True)
-    archivo = CARPETA_DATOS / f"{nombre}.json"
-    temporal = CARPETA_DATOS / f"{nombre}.tmp"
-    with temporal.open("w", encoding="utf-8") as f:
-        json.dump(contenido, f, ensure_ascii=False, indent=2)
-    temporal.replace(archivo)
-
 
 class KhronoacApp(tk.Tk):
     def __init__(self) -> None:
@@ -69,7 +34,10 @@ class KhronoacApp(tk.Tk):
         except Exception:
             pass
 
-        self.datos = leer_datos()
+        self.persistencia = KhronoacPersistenciaDatos(
+            Path(__file__).with_name("khronoac_datos")
+        )
+        self.datos = self.persistencia.cargar_datos()
         self.docente_por_etiqueta: dict[str, str] = {}
         self.docente_dias_vars: dict[str, tk.BooleanVar] = {}
         self.plan_actual: dict[str, Any] | None = self.datos["ultimoHorario"]
@@ -407,12 +375,6 @@ class KhronoacApp(tk.Tk):
         self.estado_horario = tk.StringVar(value="Registra docentes, asignaturas y espacios para comenzar.")
         ttk.Label(self.tab_horario, textvariable=self.estado_horario, style="Subtitle.TLabel", wraplength=1000).pack(anchor="w", pady=(10, 0))
 
-    def _guardar_archivo(self) -> None:
-        _guardar_seccion("docentes", self.datos["docentes"])
-        _guardar_seccion("asignaturas", self.datos["asignaturas"])
-        _guardar_seccion("espacios", self.datos["espacios"])
-        _guardar_seccion("horario", self.datos["ultimoHorario"])  # Guarda en horario.json
-
     def _invalidar_plan(self) -> None:
         self.plan_actual = None
         self.datos["ultimoHorario"] = None
@@ -542,7 +504,7 @@ class KhronoacApp(tk.Tk):
                         asignatura["docenteCedula"] = cedula
 
         self._invalidar_plan()
-        self._guardar_archivo()
+        self.persistencia.guardar_datos(self.datos)
 
         # Limpiar el formulario y salir del modo edición.
         self._limpiar_docente()
@@ -588,7 +550,7 @@ class KhronoacApp(tk.Tk):
         if messagebox.askyesno("Confirmar", "¿Eliminar el docente seleccionado?"):
             self.datos["docentes"] = [d for d in self.datos["docentes"] if d["cedula"] != cedula]
             self._invalidar_plan()
-            self._guardar_archivo()
+            self.persistencia.guardar_datos(self.datos)
             self._limpiar_docente()
             self._refrescar_listas()
 
@@ -626,7 +588,7 @@ class KhronoacApp(tk.Tk):
         else:
             self.datos["asignaturas"][existente] = registro
         self._invalidar_plan()
-        self._guardar_archivo()
+        self.persistencia.guardar_datos(self.datos)
         self._limpiar_asignatura()
         self._refrescar_listas()
 
@@ -661,7 +623,7 @@ class KhronoacApp(tk.Tk):
             nombre = seleccion[0]
             self.datos["asignaturas"] = [a for a in self.datos["asignaturas"] if a["nombreAsignatura"] != nombre]
             self._invalidar_plan()
-            self._guardar_archivo()
+            self.persistencia.guardar_datos(self.datos)
             self._limpiar_asignatura()
             self._refrescar_listas()
 
@@ -703,7 +665,7 @@ class KhronoacApp(tk.Tk):
         else:
             self.datos["espacios"][existente] = registro
         self._invalidar_plan()
-        self._guardar_archivo()
+        self.persistencia.guardar_datos(self.datos)
         self._limpiar_espacio()
         self._refrescar_listas()
 
@@ -736,7 +698,7 @@ class KhronoacApp(tk.Tk):
             codigo = seleccion[0]
             self.datos["espacios"] = [e for e in self.datos["espacios"] if e["codigoAula"] != codigo]
             self._invalidar_plan()
-            self._guardar_archivo()
+            self.persistencia.guardar_datos(self.datos)
             self._limpiar_espacio()
             self._refrescar_listas()
 
@@ -771,7 +733,7 @@ class KhronoacApp(tk.Tk):
             return
 
         self._invalidar_plan()
-        self._guardar_archivo()
+        self.persistencia.guardar_datos(self.datos)
         self._mostrar_plan_guardado()
 
         docentes = {d["cedula"]: self._crear_docente(d) for d in self.datos["docentes"]}
@@ -889,7 +851,7 @@ class KhronoacApp(tk.Tk):
             "franjasSinConflicto": not self._tiene_conflicto(resultado),
         }
         self.datos["ultimoHorario"] = self.plan_actual
-        self._guardar_archivo()
+        self.persistencia.guardar_datos(self.datos)
         self._mostrar_plan_guardado()
         self.estado_horario.set(
             f"Horario generado: {len(secciones)} paralelos, {len(resultado)} bloques de clase. "
@@ -984,9 +946,7 @@ class KhronoacApp(tk.Tk):
         if not self.plan_actual or not self.plan_actual.get("sesiones"):
             messagebox.showinfo("Sin horario", "Genera un horario antes de exportarlo.")
             return
-        archivo = CARPETA_DATOS / "horario_exportado.json"
-        with archivo.open("w", encoding="utf-8") as salida:
-            json.dump(self.plan_actual, salida, ensure_ascii=False, indent=2)
+        archivo = self.persistencia.guardar_horario_exportado(self.plan_actual)
         messagebox.showinfo("Horario exportado", f"Se guardó el horario en:\n{archivo}")
 
 

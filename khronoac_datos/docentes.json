@@ -12,5 +12,17 @@
       "Jueves",
       "Viernes"
     ]
+  },
+  {
+    "cedula": "1315201705",
+    "nombres": "Roberto Geovanny",
+    "apellidos": "Zambrano López",
+    "correoElectronico": "p1315201705@live.uleam.edu.ec",
+    "tituloAcademico": "Ingeniero en Software",
+    "diasDisponibles": [
+      "Lunes",
+      "Miércoles",
+      "Jueves"
+    ]
   }
 ]
