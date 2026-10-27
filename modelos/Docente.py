@@ -1,7 +1,7 @@
 from typing import List
 
-from FranjaHoraria import FranjaHoraria
-from Persona import Persona
+from modelos.FranjaHoraria import FranjaHoraria
+from modelos.Persona import Persona
 
 
 class Docente(Persona):

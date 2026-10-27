@@ -1,7 +1,6 @@
 from typing import List
 
-from FranjaHoraria import FranjaHoraria
-
+from modelos.FranjaHoraria import FranjaHoraria
 
 class EspacioFisico:
     def __init__(self, codigoAula: str, capacidadMaxima: int) -> None:

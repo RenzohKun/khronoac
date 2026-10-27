@@ -12,5 +12,12 @@
     "tipo": "Laboratorio",
     "tipoLaboratorio": "Redes",
     "equiposEspeciales": "30 computadoras Core Ultra 7 con Python instalado"
+  },
+  {
+    "codigoAula": "LAB-7",
+    "capacidadMaxima": 30,
+    "tipo": "Laboratorio",
+    "tipoLaboratorio": "Pratico",
+    "equiposEspeciales": ""
   }
 ]

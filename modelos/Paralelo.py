@@ -1,8 +1,7 @@
 from typing import List
 
-from Asignatura import Asignatura
-from Estudiante import Estudiante
-
+from modelos.Asignatura import Asignatura
+from modelos.Estudiante import Estudiante
 
 class Paralelo:
     def __init__(

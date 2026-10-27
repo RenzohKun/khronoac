@@ -1,7 +1,7 @@
 from typing import List
 
-from Persona import Persona
-from Asignatura import Asignatura
+from modelos.Persona import Persona
+from modelos.Asignatura import Asignatura
 
 
 class Estudiante(Persona):
