@@ -1,5 +1,3 @@
-"""Interfaz inicial de Khronoac para registrar recursos y generar horarios."""
-
 from __future__ import annotations
 
 import json
