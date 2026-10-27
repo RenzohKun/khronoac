@@ -1,4 +1,4 @@
-"""Persistencia de datos de Khronoac."""
+# Persistencia de datos de Khronoac.
 
 from .datos import KhronoacPersistenciaDatos
 

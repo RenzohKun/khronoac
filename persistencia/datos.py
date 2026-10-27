@@ -19,7 +19,7 @@ class KhronoacPersistenciaDatos:
         }
 
     def guardar_datos(self, datos: Mapping[str, Any]) -> None:
-        """Guarda las secciones principales en sus archivos JSON."""
+        # Guarda las secciones principales en sus archivos JSON.
         self.__guardar_seccion("docentes", datos["docentes"])
         self.__guardar_seccion("asignaturas", datos["asignaturas"])
         self.__guardar_seccion("espacios", datos["espacios"])
@@ -30,7 +30,7 @@ class KhronoacPersistenciaDatos:
         horario: Mapping[str, Any],
         nombre_archivo: str = "horario_exportado.json",
     ) -> Path:
-        """Guarda una copia exportada del horario y devuelve la ruta resultante."""
+        # Guarda una copia exportada del horario y devuelve la ruta resultante.
         self.__directorio_datos.mkdir(parents=True, exist_ok=True)
         archivo = self.__directorio_datos / nombre_archivo
         with archivo.open("w", encoding="utf-8") as salida:
