@@ -1,7 +1,9 @@
 from datetime import time
 
+from abstraccion.IFranjaHoraria import IFranjaHoraria
 
-class FranjaHoraria:
+
+class FranjaHoraria(IFranjaHoraria):
     def __init__(self, diaSemana: str, horaInicio: time, horaFin: time) -> None:
         self.__diaSemana = diaSemana
         self.__horaInicio = horaInicio
@@ -50,7 +52,7 @@ class FranjaHoraria:
         if self.__horaInicio >= self.__horaFin:
             raise ValueError("La hora de inicio debe ser anterior a la hora de fin.")
 
-    def verificarSolapamiento(self, otraFranja: "FranjaHoraria") -> bool:
+    def verificarSolapamiento(self, otraFranja: IFranjaHoraria) -> bool:
         if self.__diaSemana.casefold() != otraFranja.diaSemana.casefold():
             return False
         return (

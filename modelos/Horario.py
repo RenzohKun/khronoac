@@ -1,13 +1,14 @@
 from typing import List
 
-from modelos.FranjaHoraria import FranjaHoraria
+from abstraccion.IFranjaHoraria import IFranjaHoraria
+
 
 class Horario:
     def __init__(self, idHorario: str, periodoAcademico: str, tipoHorario: str) -> None:
         self.__idHorario = idHorario
         self.__periodoAcademico = periodoAcademico
         self.__tipoHorario = tipoHorario
-        self.__franjasHorarias: List[FranjaHoraria] = []
+        self.__franjasHorarias: List[IFranjaHoraria] = []
 
     @property
     def idHorario(self) -> str:
@@ -34,12 +35,12 @@ class Horario:
         self.__tipoHorario = valor
 
     @property
-    def franjasHorarias(self) -> List[FranjaHoraria]:
+    def franjasHorarias(self) -> List[IFranjaHoraria]:
         return self.__franjasHorarias.copy()
 
-    def agregarFranja(self, franja: FranjaHoraria) -> None:
-        if not isinstance(franja, FranjaHoraria):
-            raise TypeError("Solo se pueden agregar objetos FranjaHoraria.")
+    def agregarFranja(self, franja: IFranjaHoraria) -> None:
+        if not isinstance(franja, IFranjaHoraria):
+            raise TypeError("Solo se pueden agregar objetos que implementen IFranjaHoraria.")
         self.__franjasHorarias.append(franja)
 
     def validarConflictos(self) -> bool:
@@ -63,3 +64,4 @@ class Horario:
                 f"{franja.horaFin.strftime('%H:%M')}"
             )
         return "\n".join(lineas)
+
