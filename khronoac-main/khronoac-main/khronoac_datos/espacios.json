@@ -1,0 +1,16 @@
+[
+  {
+    "codigoAula": "ls 206",
+    "capacidadMaxima": 40,
+    "tipo": "Laboratorio",
+    "tipoLaboratorio": "equupado",
+    "equiposEspeciales": "454984"
+  },
+  {
+    "codigoAula": "ls 204",
+    "capacidadMaxima": 40,
+    "tipo": "Laboratorio",
+    "tipoLaboratorio": "equipò",
+    "equiposEspeciales": "no"
+  }
+]

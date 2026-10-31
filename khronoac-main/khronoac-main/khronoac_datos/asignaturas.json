@@ -1,0 +1,9 @@
+[
+  {
+    "nombreAsignatura": "Programacion",
+    "horasRequeridas": 4,
+    "requiereLaboratorio": true,
+    "demandaEstimada": 40,
+    "docenteCedula": "1316556354"
+  }
+]

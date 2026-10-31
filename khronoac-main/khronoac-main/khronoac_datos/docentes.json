@@ -1,0 +1,13 @@
+[
+  {
+    "cedula": "1316556354",
+    "nombres": "jacinto",
+    "apellidos": "lopez",
+    "correoElectronico": "lopez@gmail.com",
+    "tituloAcademico": "Ingeniero de software",
+    "diasDisponibles": [
+      "Martes",
+      "Jueves"
+    ]
+  }
+]

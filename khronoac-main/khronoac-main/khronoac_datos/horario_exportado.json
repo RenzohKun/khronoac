@@ -1,0 +1,52 @@
+{
+  "paralelos": [
+    {
+      "asignatura": "Programacion",
+      "nombreParalelo": "Programacion - 1",
+      "numero": 1,
+      "demanda": 40,
+      "cupoMaximo": 40,
+      "docenteCedula": "1316556354",
+      "horas": 3,
+      "requiereLaboratorio": true
+    }
+  ],
+  "sesiones": [
+    {
+      "dia": "Lunes",
+      "inicio": "07:00",
+      "fin": "08:00",
+      "asignatura": "Programacion",
+      "paralelo": "Programacion - 1",
+      "numeroParalelo": 1,
+      "estudiantes": 40,
+      "docente": "1316556354",
+      "espacio": "ls 206"
+    },
+    {
+      "dia": "Lunes",
+      "inicio": "08:00",
+      "fin": "09:00",
+      "asignatura": "Programacion",
+      "paralelo": "Programacion - 1",
+      "numeroParalelo": 1,
+      "estudiantes": 40,
+      "docente": "1316556354",
+      "espacio": "ls 206"
+    },
+    {
+      "dia": "Lunes",
+      "inicio": "09:00",
+      "fin": "10:00",
+      "asignatura": "Programacion",
+      "paralelo": "Programacion - 1",
+      "numeroParalelo": 1,
+      "estudiantes": 40,
+      "docente": "1316556354",
+      "espacio": "ls 206"
+    }
+  ],
+  "minimoEstudiantes": 10,
+  "bloqueMinutos": 60,
+  "franjasSinConflicto": true
+}
