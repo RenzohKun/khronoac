@@ -8,14 +8,14 @@
   },
   {
     "codigoAula": "Lab-Comp-01",
-    "capacidadMaxima": 30,
+    "capacidadMaxima": 35,
     "tipo": "Laboratorio",
     "tipoLaboratorio": "Redes",
     "equiposEspeciales": "30 computadoras Core Ultra 7 con Python instalado"
   },
   {
     "codigoAula": "LAB-7",
-    "capacidadMaxima": 30,
+    "capacidadMaxima": 35,
     "tipo": "Laboratorio",
     "tipoLaboratorio": "Pratico",
     "equiposEspeciales": ""

@@ -362,34 +362,60 @@ class KhronoacApp(tk.Tk):
 
     def _generar_horario(self) -> None:
         if not self.datos["asignaturas"]:
-            self.interfaz.mostrar_aviso("Faltan asignaturas", "Registra al menos una asignatura antes de generar el horario.")
+            self.interfaz.mostrar_aviso(
+                "Faltan asignaturas",
+                "Registra al menos una asignatura antes de generar el horario.",
+            )
             return
         if not self.datos["espacios"] or not self.datos["docentes"]:
-            self.interfaz.mostrar_aviso("Faltan recursos", "Registra al menos un docente y un espacio físico.")
+            self.interfaz.mostrar_aviso(
+                "Faltan recursos",
+                "Registra al menos un docente y un espacio físico.",
+            )
             return
         try:
             minimo = int(self.interfaz.leer_minimo_paralelo())
             if minimo < 1:
                 raise ValueError
         except ValueError:
-            self.interfaz.mostrar_aviso("Mínimo inválido", "El mínimo por paralelo debe ser un entero mayor que cero.")
+            self.interfaz.mostrar_aviso(
+                "Mínimo inválido",
+                "El mínimo por paralelo debe ser un entero mayor que cero.",
+            )
             return
 
         self._invalidar_plan()
         self.persistencia.guardar_datos(self.datos)
         self._mostrar_plan_guardado()
 
-        docentes = {d["cedula"]: self._crear_docente(d) for d in self.datos["docentes"]}
-        espacios = {e["codigoAula"]: self._crear_espacio(e) for e in self.datos["espacios"]}
+        docentes = {
+            d["cedula"]: self._crear_docente(d) for d in self.datos["docentes"]
+        }
+        espacios = {
+            e["codigoAula"]: self._crear_espacio(e)
+            for e in self.datos["espacios"]
+        }
         secciones: list[dict[str, Any]] = []
         tareas: list[dict[str, Any]] = []
         problemas: list[str] = []
 
+        
+        prototipo_bloque_1h = FranjaHoraria(
+            diaSemana="Lunes", horaInicio=time(0, 0), horaFin=time(1, 0)
+        )
+
         for registro in self.datos["asignaturas"]:
-            asignatura = Asignatura(registro["nombreAsignatura"], registro["horasRequeridas"], registro["requiereLaboratorio"])
+            asignatura = Asignatura(
+                registro["nombreAsignatura"],
+                registro["horasRequeridas"],
+                registro["requiereLaboratorio"],
+            )
             docente = docentes.get(registro["docenteCedula"])
             if docente is None:
-                problemas.append(f"{asignatura.nombreAsignatura}: el docente registrado ya no existe.")
+                problemas.append(
+                    f"{asignatura.nombreAsignatura}: el docente registrado ya"
+                    " no existe."
+                )
                 continue
 
             espacios_validos = []
@@ -401,37 +427,47 @@ class KhronoacApp(tk.Tk):
                     espacios_validos.append((clave, espacio))
 
             if not espacios_validos:
-                tipo = "laboratorio" if asignatura.requiereLaboratorio() else "aula"
-                problemas.append(f"{asignatura.nombreAsignatura}: no hay {tipo} con capacidad de al menos {minimo}.")
+                tipo = (
+                    "laboratorio"
+                    if asignatura.requiereLaboratorio()
+                    else "aula"
+                )
+                problemas.append(
+                    f"{asignatura.nombreAsignatura}: no hay {tipo} con capacidad"
+                    f" de al menos {minimo}."
+                )
                 continue
 
             demanda = int(registro["demandaEstimada"])
-            capacidad_maxima = max(espacio.capacidadMaxima for _, espacio in espacios_validos)
+            capacidad_maxima = max(
+                espacio.capacidadMaxima for _, espacio in espacios_validos
+            )
             cantidad_paralelos = math.ceil(demanda / capacidad_maxima)
             tamanos = [demanda // cantidad_paralelos] * cantidad_paralelos
             for indice in range(demanda % cantidad_paralelos):
                 tamanos[indice] += 1
             if min(tamanos) < minimo:
                 problemas.append(
-                    f"{asignatura.nombreAsignatura}: con demanda {demanda}, capacidad {capacidad_maxima} "
-                    f"y mínimo {minimo}, no se pueden formar paralelos válidos."
+                    f"{asignatura.nombreAsignatura}: con demanda {demanda},"
+                    f" capacidad {capacidad_maxima} y mínimo {minimo}, no se"
+                    " pueden formar paralelos válidos."
                 )
                 continue
 
-            if not any(docente.verificarDisponibilidad(FranjaHoraria(dia, time(HORA_INICIO), time(HORA_INICIO + 1))) for dia in DIAS):
-                problemas.append(f"{asignatura.nombreAsignatura}: su docente no tiene disponibilidad en días laborables.")
-                continue
-
             for indice, cantidad in enumerate(tamanos, start=1):
-                nombre_p = f"{asignatura.nombreAsignatura} - {indice}"
-                
-                paralelo_obj = Paralelo(nombre_p, capacidad_maxima, asignatura)
+                nombre_p = f"{asignatura.nombreAsignatura} {indice}"
+
+                paralelo_obj = Paralelo(
+                    nombre_p, capacidad_maxima, asignatura
+                )
                 for est_id in range(1, cantidad + 1):
                     alumno_temporal = Estudiante(
-                        f"EST-{asignatura.nombreAsignatura[:3]}-{indice}-{est_id:03d}",
+                        (
+                            f"EST-{asignatura.nombreAsignatura[:3]}-{indice}-{est_id:03d}"
+                        ),
                         f"Estudiante {est_id}",
                         f"Paralelo {indice}",
-                        f"estudiante{est_id}@uleam.edu.ec"
+                        f"estudiante{est_id}@uleam.edu.ec",
                     )
                     paralelo_obj.agregarEstudiante(alumno_temporal)
 
@@ -447,24 +483,46 @@ class KhronoacApp(tk.Tk):
                 }
                 secciones.append(seccion)
 
-                for numero_hora in range(1, asignatura.obtenerHorasTotales() + 1):
+                for numero_hora in range(
+                    1, asignatura.obtenerHorasTotales() + 1
+                ):
                     candidatos = []
                     for dia in DIAS:
                         for hora in range(HORA_INICIO, HORA_FIN):
-                            franja = FranjaHoraria(dia, time(hora), time(hora + 1))
-                            if not docente.verificarDisponibilidad(franja):
+                            # Clonación desde la franja prototipo en lugar de instanciación completa
+                            franja_evaluar = prototipo_bloque_1h.clonar(
+                                nuevoDia=dia,
+                                nuevaHoraInicio=time(hora),
+                                nuevaHoraFin=time(hora + 1),
+                            )
+
+                            if not docente.verificarDisponibilidad(
+                                franja_evaluar
+                            ):
                                 continue
                             for codigo, espacio in espacios_validos:
                                 if espacio.capacidadMaxima >= cantidad:
                                     candidatos.append((dia, hora, codigo))
+                    if not candidatos:
+                        problemas.append(
+                            f"{nombre_p}, bloque {numero_hora}: el docente no"
+                            " tiene disponibilidad en las horas laborables."
+                        )
                     tareas.append({
-                        "seccion": seccion, "numeroHora": numero_hora,
+                        "seccion": seccion,
+                        "numeroHora": numero_hora,
                         "franjasCandidatas": candidatos,
                     })
 
         if problemas:
-            self.interfaz.mostrar_error("No se puede generar el horario", "Corrige estos datos y vuelve a intentarlo:\n\n• " + "\n• ".join(problemas))
-            self.interfaz.mostrar_estado_horario("No se generó el horario: hay recursos o paralelos que no cumplen las restricciones.")
+            mensaje_detalle = "\n".join(f"• {p}" for p in problemas)
+            self.interfaz.mostrar_error(
+                "No se puede generar el horario",
+                f"Corrige los siguientes inconvenientes:\n\n{mensaje_detalle}"
+            )
+            self.interfaz.mostrar_estado_horario(
+                "No se generó el horario: hay recursos o paralelos que no cumplen las restricciones."
+            )
             return
 
         tareas.sort(key=lambda tarea: len(tarea["franjasCandidatas"]))
@@ -472,15 +530,26 @@ class KhronoacApp(tk.Tk):
         if resultado is None:
             self.interfaz.mostrar_error(
                 "No se encontró una planificación",
-                "No se pudieron ubicar todas las horas sin cruces. Revisa disponibilidades, número de aulas y horas requeridas.",
+                "No se pudieron ubicar todas las horas sin cruces. Revisa"
+                " disponibilidades, número de aulas y horas requeridas.",
             )
-            self.interfaz.mostrar_estado_horario("No se encontró una planificación que satisfaga todas las restricciones.")
+            self.interfaz.mostrar_estado_horario(
+                "No se encontró una planificación que satisfaga todas las"
+                " restricciones."
+            )
             return
 
         horario = Horario("HOR-001", "Periodo actual", "Académico")
         for sesion in resultado:
             horario.agregarFranja(sesion["franja"])
-        resultado.sort(key=lambda sesion: (DIAS.index(sesion["dia"]), sesion["inicio"], sesion["asignatura"], sesion["numeroParalelo"]))
+        resultado.sort(
+            key=lambda sesion: (
+                DIAS.index(sesion["dia"]),
+                sesion["inicio"],
+                sesion["asignatura"],
+                sesion["numeroParalelo"],
+            )
+        )
         self.plan_actual = {
             "paralelos": secciones,
             "sesiones": [
@@ -495,17 +564,27 @@ class KhronoacApp(tk.Tk):
         self.persistencia.guardar_datos(self.datos)
         self._mostrar_plan_guardado()
         self.interfaz.mostrar_estado_horario(
-            f"Horario generado: {len(secciones)} paralelos, {len(resultado)} bloques de clase. "
-            f"Demanda distribuida entre {minimo} y la capacidad de cada aula."
+            f"Horario generado: {len(secciones)} paralelos, {len(resultado)}"
+            " bloques de clase. Demanda distribuida entre"
+            f" {minimo} y la capacidad de cada aula."
         )
 
-    def _asignar_bloques(self, tareas: list[dict[str, Any]],
-                         espacios: dict[str, EspacioFisico]) -> list[dict[str, Any]] | None:
+    def _asignar_bloques(
+        self,
+        tareas: list[dict[str, Any]],
+        espacios: dict[str, EspacioFisico],
+    ) -> list[dict[str, Any]] | None:
         resultado: list[dict[str, Any]] = []
         docente_ocupado: set[tuple[str, str, int]] = set()
         paralelo_ocupado: set[tuple[str, str, int]] = set()
+        sesiones_por_dia = dict.fromkeys(DIAS, 0)
         nodos = 0
         limite_nodos = 250_000
+
+       
+        prototipo_bloque = FranjaHoraria(
+            diaSemana="Lunes", horaInicio=time(0, 0), horaFin=time(1, 0)
+        )
 
         def buscar(indice: int) -> bool:
             nonlocal nodos
@@ -514,21 +593,41 @@ class KhronoacApp(tk.Tk):
                 return False
             if indice == len(tareas):
                 return True
+
             tarea = tareas[indice]
             seccion = tarea["seccion"]
-            for dia, hora, codigo in tarea["franjasCandidatas"]:
+
+            franjas_ordenadas = sorted(
+                tarea["franjasCandidatas"],
+                key=lambda candidata: (
+                    sesiones_por_dia[candidata[0]],
+                    DIAS.index(candidata[0]),
+                    candidata[1],
+                    candidata[2],
+                ),
+            )
+            for dia, hora, codigo in franjas_ordenadas:
                 clave_docente = (seccion["docenteCedula"], dia, hora)
                 clave_paralelo = (seccion["nombreParalelo"], dia, hora)
                 espacio = espacios[codigo]
-                franja = FranjaHoraria(dia, time(hora), time(hora + 1))
                 if clave_docente in docente_ocupado or clave_paralelo in paralelo_ocupado:
                     continue
+
+                franja = prototipo_bloque.clonar(
+                    nuevoDia=dia,
+                    nuevaHoraInicio=time(hora),
+                    nuevaHoraFin=time(hora + 1),
+                )
+
                 if not espacio.estaDisponible(franja):
                     continue
                 if not espacio.reservarFranja(franja):
                     continue
+
                 docente_ocupado.add(clave_docente)
                 paralelo_ocupado.add(clave_paralelo)
+                sesiones_por_dia[dia] += 1
+
                 resultado.append({
                     "dia": dia,
                     "inicio": f"{hora:02d}:00",
@@ -541,12 +640,16 @@ class KhronoacApp(tk.Tk):
                     "espacio": codigo,
                     "franja": franja,
                 })
+
                 if buscar(indice + 1):
                     return True
+
                 resultado.pop()
+                sesiones_por_dia[dia] -= 1
                 docente_ocupado.remove(clave_docente)
                 paralelo_ocupado.remove(clave_paralelo)
                 espacio.liberarFranja(franja)
+
             return False
 
         return resultado if buscar(0) else None

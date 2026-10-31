@@ -21,8 +21,38 @@
     "tituloAcademico": "Ingeniero en Software",
     "diasDisponibles": [
       "Lunes",
+      "Martes",
       "Miércoles",
-      "Jueves"
+      "Jueves",
+      "Viernes"
+    ]
+  },
+  {
+    "cedula": "1316556455",
+    "nombres": "Anthony Alexander",
+    "apellidos": "Anchundia Vera",
+    "correoElectronico": "p1316556355@live.uleam.edu.ec",
+    "tituloAcademico": "",
+    "diasDisponibles": [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes"
+    ]
+  },
+  {
+    "cedula": "1",
+    "nombres": "1",
+    "apellidos": "1",
+    "correoElectronico": "1",
+    "tituloAcademico": "1",
+    "diasDisponibles": [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes"
     ]
   }
 ]
