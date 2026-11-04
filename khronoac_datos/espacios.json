@@ -19,5 +19,12 @@
     "tipo": "Laboratorio",
     "tipoLaboratorio": "Pratico",
     "equiposEspeciales": ""
+  },
+  {
+    "codigoAula": "Aula-06",
+    "capacidadMaxima": 30,
+    "tipo": "Aula",
+    "tipoLaboratorio": "",
+    "equiposEspeciales": ""
   }
 ]

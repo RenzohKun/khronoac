@@ -24,5 +24,15 @@
       "Miércoles",
       "Jueves"
     ]
+  },
+  {
+    "cedula": "13216548",
+    "nombres": "Alberto",
+    "apellidos": "Sanchez",
+    "correoElectronico": "dadwa@gmai.com",
+    "tituloAcademico": "Ingeniero",
+    "diasDisponibles": [
+      "Miércoles"
+    ]
   }
 ]

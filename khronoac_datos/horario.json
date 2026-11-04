@@ -19,6 +19,16 @@
       "docenteCedula": "1316556354",
       "horas": 4,
       "requiereLaboratorio": true
+    },
+    {
+      "asignatura": "Arquitectura",
+      "nombreParalelo": "Arquitectura - 1",
+      "numero": 1,
+      "demanda": 30,
+      "cupoMaximo": 35,
+      "docenteCedula": "13216548",
+      "horas": 2,
+      "requiereLaboratorio": false
     }
   ],
   "sesiones": [
@@ -109,9 +119,31 @@
       "estudiantes": 30,
       "docente": "1316556354",
       "espacio": "Lab-Comp-01"
+    },
+    {
+      "dia": "Miércoles",
+      "inicio": "07:00",
+      "fin": "08:00",
+      "asignatura": "Arquitectura",
+      "paralelo": "Arquitectura - 1",
+      "numeroParalelo": 1,
+      "estudiantes": 30,
+      "docente": "13216548",
+      "espacio": "Aula-01"
+    },
+    {
+      "dia": "Miércoles",
+      "inicio": "08:00",
+      "fin": "09:00",
+      "asignatura": "Arquitectura",
+      "paralelo": "Arquitectura - 1",
+      "numeroParalelo": 1,
+      "estudiantes": 30,
+      "docente": "13216548",
+      "espacio": "Aula-01"
     }
   ],
-  "minimoEstudiantes": 10,
+  "minimoEstudiantes": 20,
   "bloqueMinutos": 60,
   "franjasSinConflicto": true
 }

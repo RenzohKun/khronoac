@@ -12,5 +12,12 @@
     "requiereLaboratorio": true,
     "demandaEstimada": 30,
     "docenteCedula": "1316556354"
+  },
+  {
+    "nombreAsignatura": "Arquitectura",
+    "horasRequeridas": 2,
+    "requiereLaboratorio": false,
+    "demandaEstimada": 30,
+    "docenteCedula": "13216548"
   }
 ]

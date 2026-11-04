@@ -1,15 +1,25 @@
 import json
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, Optional
 
 
 class KhronoacPersistenciaDatos:
+    _instancia: Optional["KhronoacPersistenciaDatos"] = None
+
+    def __new__(cls, *args, **kwargs) -> "KhronoacPersistenciaDatos":
+        if cls._instancia is None:
+            cls._instancia = super().__new__(cls)
+            cls._instancia._inicializado = False
+        return cls._instancia
 
     def __init__(self, directorio_datos: Path) -> None:
+        if getattr(self, "_inicializado", False):
+            return
+
         self.__directorio_datos = Path(directorio_datos)
+        self._inicializado = True
 
     def cargar_datos(self) -> dict[str, Any]:
-        # Carga las secciones existentes y aplica los valores predeterminados.
         self.__directorio_datos.mkdir(parents=True, exist_ok=True)
         return {
             "docentes": self.__leer_seccion("docentes", []),
@@ -30,7 +40,6 @@ class KhronoacPersistenciaDatos:
         horario: Mapping[str, Any],
         nombre_archivo: str = "horario_exportado.json",
     ) -> Path:
-        # Guarda una copia exportada del horario y devuelve la ruta resultante.
         self.__directorio_datos.mkdir(parents=True, exist_ok=True)
         archivo = self.__directorio_datos / nombre_archivo
         with archivo.open("w", encoding="utf-8") as salida:
