@@ -41,7 +41,6 @@ class EspacioFisico:
         return self.__franjasOcupadas.copy()
 
     def verificarAforo(self, cantidad: int) -> int:
-        """Devuelve los puestos restantes; un valor negativo indica exceso de aforo."""
         return self.__capacidadMaxima - cantidad
 
     def estaDisponible(self, franja: FranjaHoraria) -> bool:
@@ -63,7 +62,6 @@ class EspacioFisico:
         return True
 
     def esAptoParaAsignatura(self, asignatura: Asignatura) -> bool:
-        """Contrato base (LSP): Un aula física es apta si la asignatura NO exige laboratorio."""
         return not asignatura.requiereLaboratorio()
 
 def esAptoParaAsignatura(self, asignatura: Asignatura) -> bool:

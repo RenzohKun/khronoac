@@ -2,22 +2,22 @@
   "paralelos": [
     {
       "asignatura": "Programacion Orientada a Objetos",
-      "nombreParalelo": "Programacion Orientada a Objetos - 1",
-      "numero": 1,
-      "demanda": 28,
-      "cupoMaximo": 30,
-      "docenteCedula": "1316556354",
-      "horas": 4,
-      "requiereLaboratorio": true
-    },
-    {
-      "asignatura": "Redes del computador",
-      "nombreParalelo": "Redes del computador - 1",
+      "nombreParalelo": "Programacion Orientada a Objetos 1",
       "numero": 1,
       "demanda": 30,
-      "cupoMaximo": 30,
-      "docenteCedula": "1316556354",
+      "cupoMaximo": 35,
+      "docenteCedula": "1316556455",
       "horas": 4,
+      "requiereLaboratorio": false
+    },
+    {
+      "asignatura": "Modelado Orientado Objetos",
+      "nombreParalelo": "Modelado Orientado Objetos 1",
+      "numero": 1,
+      "demanda": 30,
+      "cupoMaximo": 35,
+      "docenteCedula": "1315201705",
+      "horas": 5,
       "requiereLaboratorio": true
     },
     {
@@ -36,94 +36,56 @@
       "dia": "Lunes",
       "inicio": "07:00",
       "fin": "08:00",
-      "asignatura": "Programacion Orientada a Objetos",
-      "paralelo": "Programacion Orientada a Objetos - 1",
-      "numeroParalelo": 1,
-      "estudiantes": 28,
-      "docente": "1316556354",
-      "espacio": "Lab-Comp-01"
-    },
-    {
-      "dia": "Lunes",
-      "inicio": "08:00",
-      "fin": "09:00",
-      "asignatura": "Programacion Orientada a Objetos",
-      "paralelo": "Programacion Orientada a Objetos - 1",
-      "numeroParalelo": 1,
-      "estudiantes": 28,
-      "docente": "1316556354",
-      "espacio": "Lab-Comp-01"
-    },
-    {
-      "dia": "Lunes",
-      "inicio": "09:00",
-      "fin": "10:00",
-      "asignatura": "Programacion Orientada a Objetos",
-      "paralelo": "Programacion Orientada a Objetos - 1",
-      "numeroParalelo": 1,
-      "estudiantes": 28,
-      "docente": "1316556354",
-      "espacio": "Lab-Comp-01"
-    },
-    {
-      "dia": "Lunes",
-      "inicio": "10:00",
-      "fin": "11:00",
-      "asignatura": "Programacion Orientada a Objetos",
-      "paralelo": "Programacion Orientada a Objetos - 1",
-      "numeroParalelo": 1,
-      "estudiantes": 28,
-      "docente": "1316556354",
-      "espacio": "Lab-Comp-01"
-    },
-    {
-      "dia": "Lunes",
-      "inicio": "11:00",
-      "fin": "12:00",
-      "asignatura": "Redes del computador",
-      "paralelo": "Redes del computador - 1",
+      "asignatura": "Modelado Orientado Objetos",
+      "paralelo": "Modelado Orientado Objetos 1",
       "numeroParalelo": 1,
       "estudiantes": 30,
-      "docente": "1316556354",
-      "espacio": "Lab-Comp-01"
+      "docente": "1315201705",
+      "espacio": "LAB-7"
     },
     {
       "dia": "Lunes",
-      "inicio": "12:00",
-      "fin": "13:00",
-      "asignatura": "Redes del computador",
-      "paralelo": "Redes del computador - 1",
+      "inicio": "07:00",
+      "fin": "08:00",
+      "asignatura": "Programacion Orientada a Objetos",
+      "paralelo": "Programacion Orientada a Objetos 1",
       "numeroParalelo": 1,
       "estudiantes": 30,
-      "docente": "1316556354",
-      "espacio": "Lab-Comp-01"
+      "docente": "1316556455",
+      "espacio": "Aula-01"
     },
     {
-      "dia": "Lunes",
-      "inicio": "13:00",
-      "fin": "14:00",
-      "asignatura": "Redes del computador",
-      "paralelo": "Redes del computador - 1",
+      "dia": "Martes",
+      "inicio": "07:00",
+      "fin": "08:00",
+      "asignatura": "Modelado Orientado Objetos",
+      "paralelo": "Modelado Orientado Objetos 1",
       "numeroParalelo": 1,
       "estudiantes": 30,
-      "docente": "1316556354",
-      "espacio": "Lab-Comp-01"
+      "docente": "1315201705",
+      "espacio": "LAB-7"
     },
     {
-      "dia": "Lunes",
-      "inicio": "14:00",
-      "fin": "15:00",
-      "asignatura": "Redes del computador",
-      "paralelo": "Redes del computador - 1",
+      "dia": "Martes",
+      "inicio": "07:00",
+      "fin": "08:00",
+      "asignatura": "Programacion Orientada a Objetos",
+      "paralelo": "Programacion Orientada a Objetos 1",
       "numeroParalelo": 1,
       "estudiantes": 30,
+<<<<<<< HEAD
       "docente": "1316556354",
       "espacio": "Lab-Comp-01"
+=======
+      "docente": "1316556455",
+      "espacio": "Aula-01"
+>>>>>>> 4b79b4c1dbe542c846a2f8624f95b9fcb70cb606
     },
     {
       "dia": "Miércoles",
       "inicio": "07:00",
       "fin": "08:00",
+<<<<<<< HEAD
       "asignatura": "Arquitectura",
       "paralelo": "Arquitectura - 1",
       "numeroParalelo": 1,
@@ -141,6 +103,58 @@
       "estudiantes": 30,
       "docente": "13216548",
       "espacio": "Aula-01"
+=======
+      "asignatura": "Modelado Orientado Objetos",
+      "paralelo": "Modelado Orientado Objetos 1",
+      "numeroParalelo": 1,
+      "estudiantes": 30,
+      "docente": "1315201705",
+      "espacio": "LAB-7"
+    },
+    {
+      "dia": "Miércoles",
+      "inicio": "07:00",
+      "fin": "08:00",
+      "asignatura": "Programacion Orientada a Objetos",
+      "paralelo": "Programacion Orientada a Objetos 1",
+      "numeroParalelo": 1,
+      "estudiantes": 30,
+      "docente": "1316556455",
+      "espacio": "Aula-01"
+    },
+    {
+      "dia": "Jueves",
+      "inicio": "07:00",
+      "fin": "08:00",
+      "asignatura": "Modelado Orientado Objetos",
+      "paralelo": "Modelado Orientado Objetos 1",
+      "numeroParalelo": 1,
+      "estudiantes": 30,
+      "docente": "1315201705",
+      "espacio": "LAB-7"
+    },
+    {
+      "dia": "Jueves",
+      "inicio": "07:00",
+      "fin": "08:00",
+      "asignatura": "Programacion Orientada a Objetos",
+      "paralelo": "Programacion Orientada a Objetos 1",
+      "numeroParalelo": 1,
+      "estudiantes": 30,
+      "docente": "1316556455",
+      "espacio": "Aula-01"
+    },
+    {
+      "dia": "Viernes",
+      "inicio": "07:00",
+      "fin": "08:00",
+      "asignatura": "Modelado Orientado Objetos",
+      "paralelo": "Modelado Orientado Objetos 1",
+      "numeroParalelo": 1,
+      "estudiantes": 30,
+      "docente": "1315201705",
+      "espacio": "LAB-7"
+>>>>>>> 4b79b4c1dbe542c846a2f8624f95b9fcb70cb606
     }
   ],
   "minimoEstudiantes": 20,

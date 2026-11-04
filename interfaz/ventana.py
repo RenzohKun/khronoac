@@ -341,7 +341,7 @@ class KhronoacInterfaz:
             style="Subtitle.TLabel",
         ).pack(anchor="w", pady=(6, 10))
         columnas = (("dia", "Día", 100), ("inicio", "Inicio", 75), ("fin", "Fin", 75),
-                    ("asignatura", "Asignatura", 180), ("paralelo", "Paralelo", 90),
+                    ("asignatura", "Asignatura", 180), ("paralelo", "Paralelo / grupo", 230),
                     ("demanda", "Estudiantes", 90), ("docente", "Docente", 180), ("espacio", "Aula / laboratorio", 150))
         self.tree_horario = self._crear_tree(self.tab_horario, columnas)
         self.estado_horario = tk.StringVar(value="Registra docentes, asignaturas y espacios para comenzar.")

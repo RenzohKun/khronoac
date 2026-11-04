@@ -1,3 +1,4 @@
+import copy
 from datetime import time
 
 from abstraccion.IFranjaHoraria import IFranjaHoraria
@@ -59,3 +60,22 @@ class FranjaHoraria(IFranjaHoraria):
             self.__horaInicio < otraFranja.horaFin
             and otraFranja.horaInicio < self.__horaFin
         )
+
+    def clonar(
+        self,
+        nuevoDia: str | None = None,
+        nuevaHoraInicio: time | None = None,
+        nuevaHoraFin: time | None = None,
+    ) -> "FranjaHoraria":
+        clon = copy.copy(self)
+
+        if nuevoDia is not None:
+            clon.diaSemana = nuevoDia
+        if nuevaHoraInicio is not None:
+            clon._FranjaHoraria__horaInicio = nuevaHoraInicio
+        if nuevaHoraFin is not None:
+            clon._FranjaHoraria__horaFin = nuevaHoraFin
+
+        clon.__validarHoras()
+
+        return clon
