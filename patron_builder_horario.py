@@ -1,14 +1,3 @@
-"""
-Taller: Patrones de Diseño Creacionales
-Patrón Implementado: BUILDER (Constructor)
-Estudiante: Francis Joseph Bailon Paredes
-Proyecto: Khronoac — Sistema de Planificación de Horarios Académicos
-
-Este módulo separa el proceso de construcción del objeto complejo 'Horario'
-de su representación, encapsulando la lógica de validación de recursos,
-cálculo de demanda/paralelos y resolución algorítmica de franjas horarias.
-"""
-
 from __future__ import annotations
 
 import math
