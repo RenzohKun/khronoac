@@ -16,6 +16,7 @@ from modelos.Laboratorio import Laboratorio
 from modelos.Paralelo import Paralelo
 from persistencia import KhronoacPersistenciaDatos
 from interfaz import KhronoacInterfaz
+from fabrica_espacios import crear_espacio
 
 
 DIAS = ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes")
@@ -291,13 +292,22 @@ class KhronoacApp(tk.Tk):
         if tipo == "Laboratorio" and not formulario["tipoLaboratorio"].strip():
             self.interfaz.mostrar_aviso("Dato incompleto", "Indica el tipo de laboratorio.")
             return
-        if tipo == "Laboratorio":
-            espacio_objeto = Laboratorio(codigo, capacidad, formulario["equiposEspeciales"].strip(), formulario["tipoLaboratorio"].strip())
-            detalle_lab = {"tipoLaboratorio": espacio_objeto.tipoLaboratorio,
-                           "equiposEspeciales": espacio_objeto.equiposEspeciales}
-        else:
-            espacio_objeto = EspacioFisico(codigo, capacidad)
-            detalle_lab = {"tipoLaboratorio": "", "equiposEspeciales": ""}
+        datos_espacio = {
+            **formulario,
+            "codigoAula": codigo,
+            "capacidadMaxima": capacidad,
+            "equiposEspeciales": formulario["equiposEspeciales"].strip(),
+            "tipoLaboratorio": formulario["tipoLaboratorio"].strip(),
+        }
+        try:
+            espacio_objeto = crear_espacio(datos_espacio)
+        except ValueError as error:
+            self.interfaz.mostrar_aviso("Tipo inválido", str(error))
+            return
+        detalle_lab = {
+            "tipoLaboratorio": getattr(espacio_objeto, "tipoLaboratorio", ""),
+            "equiposEspeciales": getattr(espacio_objeto, "equiposEspeciales", ""),
+        }
         registro = {"codigoAula": espacio_objeto.codigoAula,
                     "capacidadMaxima": espacio_objeto.capacidadMaxima, "tipo": tipo, **detalle_lab}
         clave_anterior = self.espacio_editando or codigo
@@ -355,10 +365,7 @@ class KhronoacApp(tk.Tk):
         return docente
 
     def _crear_espacio(self, registro: dict[str, Any]) -> EspacioFisico:
-        if registro["tipo"] == "Laboratorio":
-            return Laboratorio(registro["codigoAula"], registro["capacidadMaxima"],
-                               registro.get("equiposEspeciales", ""), registro.get("tipoLaboratorio", ""))
-        return EspacioFisico(registro["codigoAula"], registro["capacidadMaxima"])
+        return crear_espacio(registro)
 
     def _generar_horario(self) -> None:
         if not self.datos["asignaturas"]:
