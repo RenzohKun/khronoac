@@ -4,7 +4,6 @@ import math
 from datetime import time
 from typing import Any, List, Dict, Tuple, Optional
 
-# Importaciones de dominio del proyecto Khronoac
 from modelos.Asignatura import Asignatura
 from modelos.Docente import Docente
 from modelos.EspacioFisico import EspacioFisico
