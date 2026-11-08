@@ -162,6 +162,7 @@ class KhronoacInterfaz:
                    foreground=[("active", "#ffffff")])
 
     def _construir_interfaz(self) -> None:
+        # ── Encabezado superior ───────────────────────────────────────────────
         encabezado = ttk.Frame(self.raiz, padding=(28, 20, 28, 14))
         encabezado.pack(fill="x")
 
@@ -185,22 +186,82 @@ class KhronoacInterfaz:
         sep = tk.Frame(self.raiz, height=1, bg="#1e3054")
         sep.pack(fill="x", padx=0, pady=(2, 0))
 
-        self.notebook = ttk.Notebook(self.raiz)
-        self.notebook.pack(fill="both", expand=True, padx=20, pady=(10, 14))
+        # ── Área principal: sidebar izquierdo + contenido ─────────────────────
+        area_principal = ttk.Frame(self.raiz)
+        area_principal.pack(fill="both", expand=True)
 
-        self.tab_docentes = ttk.Frame(self.notebook, padding=16)
-        self.tab_asignaturas = ttk.Frame(self.notebook, padding=16)
-        self.tab_espacios = ttk.Frame(self.notebook, padding=16)
-        self.tab_horario = ttk.Frame(self.notebook, padding=16)
-        self.notebook.add(self.tab_docentes,   text="  👤  Docentes  ")
-        self.notebook.add(self.tab_asignaturas, text="  📚  Asignaturas  ")
-        self.notebook.add(self.tab_espacios,   text="  🏫  Aulas y Laboratorios  ")
-        self.notebook.add(self.tab_horario,    text="  🗓  Planificar Horario  ")
+        # Sidebar
+        self._sidebar = tk.Frame(area_principal, bg="#131c2e", width=200)
+        self._sidebar.pack(side="left", fill="y")
+        self._sidebar.pack_propagate(False)
+
+        # Divisor vertical
+        tk.Frame(area_principal, width=1, bg="#1e3054").pack(side="left", fill="y")
+
+        # Área de contenido
+        self._contenedor = ttk.Frame(area_principal, padding=(20, 14, 20, 14))
+        self._contenedor.pack(side="left", fill="both", expand=True)
+
+        # Frames de cada sección
+        self.tab_docentes    = ttk.Frame(self._contenedor, padding=4)
+        self.tab_asignaturas = ttk.Frame(self._contenedor, padding=4)
+        self.tab_espacios    = ttk.Frame(self._contenedor, padding=4)
+        self.tab_horario     = ttk.Frame(self._contenedor, padding=4)
 
         self._construir_tab_docentes()
         self._construir_tab_asignaturas()
         self._construir_tab_espacios()
         self._construir_tab_horario()
+
+        # ── Botones del sidebar ───────────────────────────────────────────────
+        self._btn_sidebar: dict[str, tk.Button] = {}
+        self._frame_activo: ttk.Frame | None = None
+
+        secciones = [
+            ("  👤   Docentes",           self.tab_docentes),
+            ("  📚   Asignaturas",         self.tab_asignaturas),
+            ("  🏫   Aulas y Labs",        self.tab_espacios),
+            ("  🗓   Planificar Horario",  self.tab_horario),
+        ]
+
+        tk.Frame(self._sidebar, bg="#131c2e", height=18).pack()  # margen superior
+
+        for texto, frame in secciones:
+            btn = tk.Button(
+                self._sidebar,
+                text=texto,
+                anchor="w",
+                font=("Segoe UI", 10, "bold"),
+                bg="#131c2e",
+                fg="#7a8faa",
+                activebackground="#1e2d45",
+                activeforeground="#ffffff",
+                relief="flat",
+                bd=0,
+                padx=18,
+                pady=12,
+                cursor="hand2",
+                command=lambda f=frame, t=texto: self._cambiar_seccion(t, f),
+            )
+            btn.pack(fill="x", pady=1)
+            self._btn_sidebar[texto] = btn
+
+        # Mostrar la primera sección al arrancar
+        primer_texto = list(self._btn_sidebar)[0]
+        self._cambiar_seccion(primer_texto, self.tab_docentes)
+
+    def _cambiar_seccion(self, texto_activo: str, frame: ttk.Frame) -> None:
+        """Oculta la sección actual y muestra la seleccionada."""
+        if self._frame_activo is not None:
+            self._frame_activo.pack_forget()
+
+        for texto, btn in self._btn_sidebar.items():
+            btn.config(bg="#131c2e", fg="#7a8faa")
+
+        self._btn_sidebar[texto_activo].config(bg="#1e3a5f", fg="#ffffff")
+
+        frame.pack(fill="both", expand=True)
+        self._frame_activo = frame
 
     @staticmethod
     def _crear_tree(parent: ttk.Frame, columnas: tuple[tuple[str, str, int], ...]) -> ttk.Treeview:
@@ -260,11 +321,11 @@ class KhronoacInterfaz:
         ttk.Button(acciones, text="  ✔  Guardar docente", style="Accent.TButton", command=self.acciones["guardar_docente"]).pack(side="left", padx=5)
         ttk.Button(acciones, text="  ✕  Limpiar", command=self.acciones["limpiar_docente"]).pack(side="left", padx=5)
 
+        ttk.Button(self.tab_docentes, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self.acciones["eliminar_docente"]).pack(anchor="e", pady=(0, 6))
         columnas = (("cedula", "Identificador", 120), ("nombre", "Docente", 220),
                     ("correo", "Correo", 220), ("titulo", "Título", 180), ("dias", "Días disponibles", 250))
         self.tree_docentes = self._crear_tree(self.tab_docentes, columnas)
         self.tree_docentes.bind("<<TreeviewSelect>>", self.__evento_seleccion_docente)
-        ttk.Button(self.tab_docentes, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self.acciones["eliminar_docente"]).pack(anchor="e", pady=(10, 2))
 
     def _construir_tab_asignaturas(self) -> None:
         formulario = ttk.Frame(self.tab_asignaturas, style="Card.TFrame", padding=12)
@@ -290,11 +351,11 @@ class KhronoacInterfaz:
         ttk.Button(acciones, text="  ✔  Guardar asignatura", style="Accent.TButton", command=self.acciones["guardar_asignatura"]).pack(side="left", padx=5)
         ttk.Button(acciones, text="  ✕  Limpiar", command=self.acciones["limpiar_asignatura"]).pack(side="left", padx=5)
 
+        ttk.Button(self.tab_asignaturas, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self.acciones["eliminar_asignatura"]).pack(anchor="e", pady=(0, 6))
         columnas = (("nombre", "Asignatura", 220), ("horas", "Horas/semana", 110),
                     ("demanda", "Demanda estimada", 140), ("docente", "Docente", 220), ("lab", "Laboratorio", 110))
         self.tree_asignaturas = self._crear_tree(self.tab_asignaturas, columnas)
         self.tree_asignaturas.bind("<<TreeviewSelect>>", self.__evento_seleccion_asignatura)
-        ttk.Button(self.tab_asignaturas, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self.acciones["eliminar_asignatura"]).pack(anchor="e", pady=(10, 2))
 
     def _construir_tab_espacios(self) -> None:
         formulario = ttk.Frame(self.tab_espacios, style="Card.TFrame", padding=12)
@@ -321,11 +382,11 @@ class KhronoacInterfaz:
         ttk.Button(acciones, text="  ✔  Guardar espacio", style="Accent.TButton", command=self.acciones["guardar_espacio"]).pack(side="left", padx=5)
         ttk.Button(acciones, text="  ✕  Limpiar", command=self.acciones["limpiar_espacio"]).pack(side="left", padx=5)
 
+        ttk.Button(self.tab_espacios, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self.acciones["eliminar_espacio"]).pack(anchor="e", pady=(0, 6))
         columnas = (("codigo", "Código", 150), ("tipo", "Tipo", 140),
                     ("capacidad", "Capacidad", 110), ("detalle", "Equipamiento / tipo", 360))
         self.tree_espacios = self._crear_tree(self.tab_espacios, columnas)
         self.tree_espacios.bind("<<TreeviewSelect>>", self.__evento_seleccion_espacio)
-        ttk.Button(self.tab_espacios, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self.acciones["eliminar_espacio"]).pack(anchor="e", pady=(10, 2))
 
     def _construir_tab_horario(self) -> None:
         controles = ttk.Frame(self.tab_horario, style="Card.TFrame", padding=12)

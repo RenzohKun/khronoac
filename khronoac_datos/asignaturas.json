@@ -1,27 +1,9 @@
 [
   {
-    "nombreAsignatura": "Programacion Orientada a Objetos",
-    "horasRequeridas": 4,
+    "nombreAsignatura": "ñ",
+    "horasRequeridas": 3,
     "requiereLaboratorio": false,
     "demandaEstimada": 30,
-    "docenteCedula": "1316556455"
-  },
-  {
-    "nombreAsignatura": "Modelado Orientado Objetos",
-    "horasRequeridas": 5,
-    "requiereLaboratorio": true,
-    "demandaEstimada": 30,
-<<<<<<< HEAD
     "docenteCedula": "1316556354"
-  },
-  {
-    "nombreAsignatura": "Arquitectura",
-    "horasRequeridas": 2,
-    "requiereLaboratorio": false,
-    "demandaEstimada": 30,
-    "docenteCedula": "13216548"
-=======
-    "docenteCedula": "1315201705"
->>>>>>> 4b79b4c1dbe542c846a2f8624f95b9fcb70cb606
   }
 ]
