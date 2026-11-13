@@ -11,12 +11,18 @@ class KhronoacInterfaz:
         raiz: tk.Misc,
         acciones: dict[str, Callable[..., Any]],
         dias: tuple[str, ...],
+        hora_inicio: int = 7,
+        hora_fin: int = 20,
     ) -> None:
         self.raiz = raiz
         self.acciones = acciones
         self.dias = dias
+        self.hora_inicio = hora_inicio
+        self.hora_fin = hora_fin
         self.docente_por_etiqueta: dict[str, str] = {}
         self.docente_dias_vars: dict[str, tk.BooleanVar] = {}
+        self.plan_horario: dict[str, Any] | None = None
+        self.docentes_horario: list[dict[str, Any]] = []
 
     def construir(self) -> None:
         self._configurar_estilos()
@@ -596,33 +602,55 @@ class KhronoacInterfaz:
         tk.Label(blq_min, text="Mínimo de estudiantes por paralelo",
                  font=("Segoe UI", 8), bg="#1a2233", fg="#7a8faa").pack(anchor="w")
         self.minimo_var = tk.StringVar(value="10")
-        ttk.Spinbox(blq_min, from_=1, to=200, textvariable=self.minimo_var, width=8).pack(anchor="w", pady=(2, 0))
-
-        sep_v = tk.Frame(fila_ctrl, width=1, bg="#243047")
-        sep_v.pack(side="left", fill="y", padx=(0, 20))
-
-        ttk.Button(fila_ctrl, text="  ▶  Generar horario", style="Accent.TButton",
-                   command=self.acciones["generar_horario"]).pack(side="left", padx=(0, 8))
-        ttk.Button(fila_ctrl, text="  ↓  Exportar JSON",
-                   command=self.acciones["exportar_horario"]).pack(side="left")
-
-        
-        fila_tabla = tk.Frame(self.tab_horario, bg="#0f1623")
-        fila_tabla.pack(fill="x", pady=(4, 4))
-        tk.Label(fila_tabla, text="Horario generado", font=("Segoe UI", 9, "bold"),
-                 bg="#0f1623", fg="#c7d8f0").pack(side="left")
-
-        columnas = (
-            ("dia",        "Día",                100),
-            ("inicio",     "Inicio",              75),
-            ("fin",        "Fin",                 75),
-            ("asignatura", "Asignatura",          180),
-            ("paralelo",   "Paralelo / grupo",    230),
-            ("demanda",    "Estudiantes",          90),
-            ("docente",    "Docente",             180),
-            ("espacio",    "Aula / laboratorio",  150),
+        ttk.Spinbox(fila_ctrl, from_=1, to=200, textvariable=self.minimo_var, width=7).pack(side="left", padx=10)
+        ttk.Button(fila_ctrl, text="  ▶  Generar horario", style="Accent.TButton", command=self.acciones["generar_horario"]).pack(side="left", padx=8)
+        ttk.Button(fila_ctrl, text="  ↓  Exportar JSON", command=self.acciones["exportar_horario"]).pack(side="left", padx=6)
+        ttk.Label(fila_ctrl, text="Vista:", style="Card.TLabel").pack(side="left", padx=(18, 6))
+        self.paralelo_var = tk.StringVar(value="Todos los paralelos")
+        self.combo_paralelo = ttk.Combobox(
+            fila_ctrl,
+            textvariable=self.paralelo_var,
+            values=("Todos los paralelos",),
+            state="readonly",
+            width=24,
         )
-        self.tree_horario = self._crear_tree(self.tab_horario, columnas)
+        self.combo_paralelo.pack(side="left")
+        self.combo_paralelo.bind(
+            "<<ComboboxSelected>>", self.__evento_cambio_paralelo
+        )
+        ttk.Label(
+            self.tab_horario,
+            text=(
+                f"Cada hora se planifica como un bloque de 60 min · Lunes a Viernes · "
+                f"{self.hora_inicio:02d}:00 – {self.hora_fin:02d}:00 · "
+                "Sin conflictos de docente, aula o paralelo."
+            ),
+            style="Subtitle.TLabel",
+        ).pack(anchor="w", pady=(6, 10))
+
+        contenedor = ttk.Frame(self.tab_horario, style="Card.TFrame", padding=1)
+        contenedor.pack(fill="both", expand=True)
+        self.horario_canvas = tk.Canvas(
+            contenedor,
+            background="#fffefa",
+            highlightthickness=0,
+            borderwidth=0,
+        )
+        scroll_y = ttk.Scrollbar(
+            contenedor, orient="vertical", command=self.horario_canvas.yview
+        )
+        scroll_x = ttk.Scrollbar(
+            contenedor, orient="horizontal", command=self.horario_canvas.xview
+        )
+        self.horario_canvas.configure(
+            yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set
+        )
+        self.horario_canvas.grid(row=0, column=0, sticky="nsew")
+        scroll_y.grid(row=0, column=1, sticky="ns")
+        scroll_x.grid(row=1, column=0, sticky="ew")
+        contenedor.rowconfigure(0, weight=1)
+        contenedor.columnconfigure(0, weight=1)
+        self.horario_canvas.bind("<Configure>", self.__redibujar_horario)
 
         self.estado_horario = tk.StringVar(value="Registra docentes, asignaturas y espacios para comenzar.")
         tk.Label(self.tab_horario, textvariable=self.estado_horario,
@@ -787,28 +815,180 @@ class KhronoacInterfaz:
         plan: dict[str, Any] | None,
         docentes: list[dict[str, Any]],
     ) -> None:
-        self.tree_horario.delete(*self.tree_horario.get_children())
-        if not plan:
+        self.plan_horario = plan
+        self.docentes_horario = docentes
+        datos_plan = plan or {}
+        paralelos = sorted(
+            {sesion["paralelo"] for sesion in datos_plan.get("sesiones", [])}
+        )
+        opciones = ("Todos los paralelos", *paralelos)
+        self.combo_paralelo.configure(values=opciones)
+        if self.paralelo_var.get() not in opciones:
+            self.paralelo_var.set("Todos los paralelos")
+        self.__redibujar_horario()
+        if not datos_plan.get("sesiones"):
             return
-        docentes_por_cedula = {docente["cedula"]: docente for docente in docentes}
-        for sesion in plan.get("sesiones", []):
-            docente = docentes_por_cedula.get(sesion["docente"])
-            nombre_docente = (
-                f"{docente['nombres']} {docente['apellidos']}"
-                if docente else sesion["docente"]
+        self.mostrar_estado_horario(
+            f"Horario guardado: {len(datos_plan.get('paralelos', []))} paralelos, "
+            f"{len(datos_plan['sesiones'])} bloques; mínimo configurado: "
+            f"{datos_plan.get('minimoEstudiantes', '—')} estudiantes."
+        )
+
+    def __evento_cambio_paralelo(self, _evento: tk.Event) -> None:
+        self.__redibujar_horario()
+
+    def __redibujar_horario(self, _evento: tk.Event | None = None) -> None:
+        canvas = getattr(self, "horario_canvas", None)
+        if canvas is None:
+            return
+
+        ancho = max(canvas.winfo_width(), 900)
+        margen = 24
+        ancho_hora = 88
+        ancho_dia = (ancho - margen * 2 - ancho_hora) / len(self.dias)
+        alto_cabecera = 36
+        inicio_tabla = 132
+        sesiones = (self.plan_horario or {}).get("sesiones", [])
+        paralelo = self.paralelo_var.get()
+        if paralelo != "Todos los paralelos":
+            sesiones = [sesion for sesion in sesiones if sesion["paralelo"] == paralelo]
+
+        sesiones_por_celda: dict[tuple[int, str], list[dict[str, Any]]] = {}
+        for sesion in sesiones:
+            hora = int(sesion["inicio"].split(":")[0])
+            sesiones_por_celda.setdefault((hora, sesion["dia"]), []).append(sesion)
+        for bloques in sesiones_por_celda.values():
+            bloques.sort(key=lambda sesion: (sesion["asignatura"], sesion["paralelo"]))
+
+        asignaturas = sorted({sesion["asignatura"] for sesion in sesiones})
+        paleta = (
+            ("#dbeafe", "#2563eb"),
+            ("#dcfce7", "#16a34a"),
+            ("#fef3c7", "#d97706"),
+            ("#f3e8ff", "#9333ea"),
+            ("#ffe4e6", "#e11d48"),
+            ("#cffafe", "#0891b2"),
+        )
+        colores = {
+            asignatura: paleta[indice % len(paleta)]
+            for indice, asignatura in enumerate(asignaturas)
+        }
+        docentes = {
+            docente["cedula"]: f"{docente['nombres']} {docente['apellidos']}"
+            for docente in self.docentes_horario
+        }
+        alturas = {}
+        for hora in range(self.hora_inicio, self.hora_fin):
+            cantidad = max(
+                (len(sesiones_por_celda.get((hora, dia), [])) for dia in self.dias),
+                default=0,
             )
-            self.tree_horario.insert(
-                "", "end", values=(
-                    sesion["dia"], sesion["inicio"], sesion["fin"],
-                    sesion["asignatura"], sesion["paralelo"],
-                    sesion["estudiantes"], nombre_docente, sesion["espacio"],
-                )
+            alturas[hora] = max(64, 8 + cantidad * 58)
+
+        alto_total = inicio_tabla + alto_cabecera + sum(alturas.values()) + margen
+        canvas.delete("all")
+        canvas.configure(scrollregion=(0, 0, ancho, alto_total))
+        canvas.create_rectangle(0, 0, ancho, alto_total, fill="#fffefa", outline="")
+        canvas.create_rectangle(
+            margen, 20, ancho - margen, 48, fill="#f1f1f1", outline=""
+        )
+        canvas.create_text(
+            margen + 12, 34, text="Nombre: Khronoac",
+            anchor="w", fill="#202020", font=("Segoe UI", 11, "bold"),
+        )
+        canvas.create_rectangle(
+            margen, 56, ancho - margen - 190, 84, fill="#f1f1f1", outline=""
+        )
+        canvas.create_text(
+            margen + 12, 70, text=f"Curso: {paralelo}",
+            anchor="w", fill="#202020", font=("Segoe UI", 10),
+        )
+        canvas.create_text(
+            ancho - margen - 8, 63, text="HORARIO",
+            anchor="e", fill="#202020", font=("Segoe UI", 22, "bold"),
+        )
+
+        x_inicio = margen
+        y_inicio = inicio_tabla
+        columnas_x = [x_inicio, x_inicio + ancho_hora]
+        for _dia in self.dias:
+            columnas_x.append(columnas_x[-1] + ancho_dia)
+        columnas_x[-1] = ancho - margen
+
+        canvas.create_rectangle(
+            x_inicio, y_inicio, ancho - margen, y_inicio + alto_cabecera,
+            fill="#f1f1f1", outline="",
+        )
+        canvas.create_text(
+            x_inicio + ancho_hora / 2, y_inicio + alto_cabecera / 2,
+            text="Hora", fill="#202020", font=("Segoe UI", 10, "bold"),
+        )
+        for indice, dia in enumerate(self.dias):
+            centro = (columnas_x[indice + 1] + columnas_x[indice + 2]) / 2
+            canvas.create_text(
+                centro, y_inicio + alto_cabecera / 2, text=dia,
+                fill="#202020", font=("Segoe UI", 10, "bold"),
             )
-        if plan.get("sesiones"):
-            self.mostrar_estado_horario(
-                f"Horario guardado: {len(plan.get('paralelos', []))} paralelos, "
-                f"{len(plan['sesiones'])} bloques; mínimo configurado: "
-                f"{plan.get('minimoEstudiantes', '—')} estudiantes."
+
+        y = y_inicio + alto_cabecera
+        for hora in range(self.hora_inicio, self.hora_fin):
+            alto = alturas[hora]
+            canvas.create_rectangle(
+                x_inicio, y, ancho - margen, y + alto,
+                fill="#fffefa", outline="",
+            )
+            canvas.create_text(
+                x_inicio + ancho_hora / 2, y + alto / 2,
+                text=f"{hora:02d}:00 – {hora + 1:02d}:00",
+                fill="#333333", font=("Segoe UI", 9),
+            )
+            for indice, dia in enumerate(self.dias):
+                izquierda = columnas_x[indice + 1]
+                derecha = columnas_x[indice + 2]
+                for bloque_indice, sesion in enumerate(
+                    sesiones_por_celda.get((hora, dia), [])
+                ):
+                    tarjeta_y = y + 4 + bloque_indice * 58
+                    fondo, acento = colores[sesion["asignatura"]]
+                    canvas.create_rectangle(
+                        izquierda + 4, tarjeta_y, derecha - 4, tarjeta_y + 54,
+                        fill=fondo, outline="#d9dee8",
+                    )
+                    canvas.create_rectangle(
+                        izquierda + 4, tarjeta_y, izquierda + 8, tarjeta_y + 54,
+                        fill=acento, outline="",
+                    )
+                    ancho_texto = max(24, derecha - izquierda - 22)
+                    canvas.create_text(
+                        izquierda + 13, tarjeta_y + 5,
+                        text=sesion["asignatura"], anchor="nw", width=ancho_texto,
+                        fill="#172033", font=("Segoe UI", 8, "bold"),
+                    )
+                    docente = docentes.get(sesion["docente"], sesion["docente"])
+                    detalle = (
+                        f"Paralelo {sesion['numeroParalelo']} · {sesion['espacio']}\n"
+                        f"{docente}"
+                    )
+                    canvas.create_text(
+                        izquierda + 13, tarjeta_y + 25,
+                        text=detalle, anchor="nw", width=ancho_texto,
+                        fill="#465268", font=("Segoe UI", 7),
+                    )
+            y += alto
+
+        for x in columnas_x:
+            canvas.create_line(x, y_inicio, x, y, fill="#343434", width=1)
+        canvas.create_line(x_inicio, y_inicio, ancho - margen, y_inicio, fill="#343434")
+        canvas.create_line(
+            x_inicio, y_inicio + alto_cabecera, ancho - margen,
+            y_inicio + alto_cabecera, fill="#343434",
+        )
+        fila_y = y_inicio + alto_cabecera
+        for hora in range(self.hora_inicio, self.hora_fin):
+            fila_y += alturas[hora]
+            canvas.create_line(
+                x_inicio, fila_y, ancho - margen, fila_y,
+                fill="#343434", width=1,
             )
 
     def mostrar_estado_horario(self, texto: str) -> None:
