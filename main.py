@@ -1,17 +1,9 @@
 from __future__ import annotations
-
-# ──────────────────────────────────────────────────────────────────────────────
-#  Librería estándar
-# ──────────────────────────────────────────────────────────────────────────────
 import math
 import tkinter as tk
 from datetime import time
 from pathlib import Path
 from typing import Any
-
-# ──────────────────────────────────────────────────────────────────────────────
-#  Modelos del dominio
-# ──────────────────────────────────────────────────────────────────────────────
 from modelos.Asignatura    import Asignatura
 from modelos.Docente       import Docente
 from modelos.EspacioFisico import EspacioFisico
@@ -20,27 +12,15 @@ from modelos.FranjaHoraria import FranjaHoraria
 from modelos.Horario       import Horario
 from modelos.Laboratorio   import Laboratorio
 from modelos.Paralelo      import Paralelo
-
-# ──────────────────────────────────────────────────────────────────────────────
-#  Capas de infraestructura
-# ──────────────────────────────────────────────────────────────────────────────
 from persistencia      import KhronoacPersistenciaDatos
 from interfaz          import KhronoacInterfaz
 from fabrica_espacios  import crear_espacio
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  Constantes de configuración académica
-# ══════════════════════════════════════════════════════════════════════════════
-
 DIAS       = ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes")
 HORA_INICIO = 7
 HORA_FIN    = 20
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Aplicación principal
-# ══════════════════════════════════════════════════════════════════════════════
 
 class KhronoacApp(tk.Tk):
     """Controlador principal de Khronoac.
@@ -49,7 +29,7 @@ class KhronoacApp(tk.Tk):
     de planificación de horarios académicos.
     """
 
-    # ── Inicialización ────────────────────────────────────────────────────────
+   
 
     def __init__(self) -> None:
         super().__init__()
@@ -64,7 +44,7 @@ class KhronoacApp(tk.Tk):
         except Exception:
             pass
 
-        # Persistencia y estado en memoria
+       
         self.persistencia = KhronoacPersistenciaDatos(
             Path(__file__).with_name("khronoac_datos")
         )
@@ -74,7 +54,7 @@ class KhronoacApp(tk.Tk):
         self.asignatura_editando: str | None   = None
         self.espacio_editando:   str | None    = None
 
-        # Construcción de la UI
+      
         self.interfaz = KhronoacInterfaz(self, self._crear_acciones_interfaz(), DIAS)
         self.interfaz.construir()
         self._refrescar_listas()
@@ -98,7 +78,7 @@ class KhronoacApp(tk.Tk):
             "exportar_horario":     self._exportar_horario,
         }
 
-    # ── Utilidades internas ───────────────────────────────────────────────────
+
 
     def _invalidar_plan(self) -> None:
         self.plan_actual = None
@@ -127,7 +107,7 @@ class KhronoacApp(tk.Tk):
         )
         self._mostrar_plan_guardado()
 
-    # ── CRUD — Docentes ───────────────────────────────────────────────────────
+   
 
     def _guardar_docente(self) -> None:
         formulario = self.interfaz.leer_formulario_docente()
@@ -153,7 +133,7 @@ class KhronoacApp(tk.Tk):
         clave_anterior = self.docente_editando
         indice_nuevo   = self._indice_por_clave(self.datos["docentes"], "cedula", cedula)
 
-        # Alta: verificar que la cédula no exista.
+       
         if clave_anterior is None and indice_nuevo is not None:
             self.interfaz.mostrar_aviso(
                 "Identificador duplicado",
@@ -185,7 +165,7 @@ class KhronoacApp(tk.Tk):
                 )
                 return
 
-            # Evitar usar la cédula de otro docente.
+          
             if indice_nuevo is not None and cedula != clave_anterior:
                 self.interfaz.mostrar_aviso(
                     "Identificador duplicado",
@@ -195,7 +175,7 @@ class KhronoacApp(tk.Tk):
 
             self.datos["docentes"][indice_anterior] = docente
 
-            # Propagar el cambio de cédula a las asignaturas relacionadas.
+           
             if cedula != clave_anterior:
                 for asignatura in self.datos["asignaturas"]:
                     if asignatura["docenteCedula"] == clave_anterior:
@@ -239,7 +219,6 @@ class KhronoacApp(tk.Tk):
             self._limpiar_docente()
             self._refrescar_listas()
 
-    # ── CRUD — Asignaturas ────────────────────────────────────────────────────
 
     def _guardar_asignatura(self) -> None:
         formulario = self.interfaz.leer_formulario_asignatura()
@@ -332,7 +311,6 @@ class KhronoacApp(tk.Tk):
             self._limpiar_asignatura()
             self._refrescar_listas()
 
-    # ── CRUD — Espacios físicos ───────────────────────────────────────────────
 
     def _guardar_espacio(self) -> None:
         formulario = self.interfaz.leer_formulario_espacio()
@@ -438,7 +416,7 @@ class KhronoacApp(tk.Tk):
             self._limpiar_espacio()
             self._refrescar_listas()
 
-    # ── Construcción de objetos de dominio ────────────────────────────────────
+
 
     def _crear_docente(self, registro: dict[str, Any]) -> Docente:
         docente = Docente(
@@ -574,7 +552,7 @@ class KhronoacApp(tk.Tk):
                     candidatos = []
                     for dia in DIAS:
                         for hora in range(HORA_INICIO, HORA_FIN):
-                            # Clonar desde el prototipo en lugar de instanciar.
+                          
                             franja_evaluar = prototipo_bloque_1h.clonar(
                                 nuevoDia=dia,
                                 nuevaHoraInicio=time(hora),
@@ -742,8 +720,6 @@ class KhronoacApp(tk.Tk):
 
         return resultado if buscar(0) else None
 
-    # ── Detección de conflictos ───────────────────────────────────────────────
-
     @staticmethod
     def _tiene_conflicto(sesiones: list[dict[str, Any]]) -> bool:
         ocupaciones: set[tuple[str, str, str]] = set()
@@ -756,7 +732,6 @@ class KhronoacApp(tk.Tk):
                 ocupaciones.add(clave)
         return False
 
-    # ── Visualización y exportación ───────────────────────────────────────────
 
     def _mostrar_plan_guardado(self) -> None:
         self.plan_actual = self.datos.get("ultimoHorario")
@@ -772,11 +747,6 @@ class KhronoacApp(tk.Tk):
         self.interfaz.mostrar_informacion(
             "Horario exportado", f"Se guardó el horario en:\n{archivo}"
         )
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  Punto de entrada
-# ══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     KhronoacApp().mainloop()
