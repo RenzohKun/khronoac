@@ -29,16 +29,16 @@ class KhronoacInterfaz:
         except tk.TclError:
             pass
 
-        # ── Colores base ──────────────────────────────────────────────────
-        BG          = "#0f1623"   # fondo principal oscuro
-        CARD        = "#1a2233"   # fondo de tarjetas/paneles
-        CARD_BORDER = "#243047"   # borde sutil de tarjetas
-        FG          = "#e8edf5"   # texto principal
-        FG_MUTED    = "#7a8faa"   # texto secundario
-        ACCENT      = "#3b82f6"   # azul brillante primario
-        ACCENT_HOV  = "#2563eb"   # hover del acento
-        ACCENT2     = "#6366f1"   # índigo para variaciones
-        HEADING_FG  = "#c7d8f0"   # encabezados de columna
+       
+        BG          = "#0f1623"   
+        CARD        = "#1a2233"   
+        CARD_BORDER = "#243047"   
+        FG          = "#e8edf5"   
+        FG_MUTED    = "#7a8faa"   
+        ACCENT      = "#3b82f6"   
+        ACCENT_HOV  = "#2563eb"   
+        ACCENT2     = "#6366f1"   
+        HEADING_FG  = "#c7d8f0"   
         ROW_ODD     = "#1a2233"
         ROW_EVEN    = "#151e2d"
         SEL_BG      = "#1e3a5f"
@@ -162,47 +162,48 @@ class KhronoacInterfaz:
                    foreground=[("active", "#ffffff")])
 
     def _construir_interfaz(self) -> None:
-        # ── Encabezado superior ───────────────────────────────────────────────
-        encabezado = ttk.Frame(self.raiz, padding=(28, 20, 28, 14))
+      
+        encabezado = tk.Frame(self.raiz, bg="#0a1120", pady=0)
         encabezado.pack(fill="x")
 
-        fila_titulo = ttk.Frame(encabezado)
+   
+        tk.Frame(encabezado, height=3, bg="#3b82f6").pack(fill="x")
+
+        inner = tk.Frame(encabezado, bg="#0a1120")
+        inner.pack(fill="x", padx=28, pady=(14, 14))
+
+        fila_titulo = tk.Frame(inner, bg="#0a1120")
         fila_titulo.pack(fill="x")
-        ttk.Label(fila_titulo, text="🗓  Khronoac", style="Title.TLabel").pack(side="left")
-        ttk.Label(
-            fila_titulo,
-            text="v1.0",
-            foreground="#3b82f6",
-            background="#0f1623",
-            font=("Segoe UI", 9, "bold"),
-        ).pack(side="left", padx=(10, 0), pady=(8, 0))
 
-        ttk.Label(
-            encabezado,
-            text="Gestión de recursos académicos · Generación automática de horarios sin conflictos",
-            style="Subtitle.TLabel",
-        ).pack(anchor="w", pady=(4, 0))
+        tk.Label(fila_titulo, text="🗓", font=("Segoe UI", 20),
+                 bg="#0a1120", fg="#3b82f6").pack(side="left")
+        tk.Label(fila_titulo, text=" Khronoac", font=("Segoe UI", 20, "bold"),
+                 bg="#0a1120", fg="#e8edf5").pack(side="left")
+        tk.Label(fila_titulo, text=" v1.0", font=("Segoe UI", 9, "bold"),
+                 bg="#0a1120", fg="#3b82f6").pack(side="left", pady=(6, 0))
 
-        sep = tk.Frame(self.raiz, height=1, bg="#1e3054")
-        sep.pack(fill="x", padx=0, pady=(2, 0))
+        tk.Label(inner,
+                 text="Gestión de recursos académicos  ·  Generación automática de horarios sin conflictos",
+                 font=("Segoe UI", 9), bg="#0a1120", fg="#4a6080").pack(anchor="w", pady=(3, 0))
 
-        # ── Área principal: sidebar izquierdo + contenido ─────────────────────
+
+        tk.Frame(self.raiz, height=1, bg="#1e3054").pack(fill="x")
+
+   
         area_principal = ttk.Frame(self.raiz)
         area_principal.pack(fill="both", expand=True)
 
-        # Sidebar
-        self._sidebar = tk.Frame(area_principal, bg="#131c2e", width=200)
+
+        self._sidebar = tk.Frame(area_principal, bg="#0d1420", width=210)
         self._sidebar.pack(side="left", fill="y")
         self._sidebar.pack_propagate(False)
 
-        # Divisor vertical
         tk.Frame(area_principal, width=1, bg="#1e3054").pack(side="left", fill="y")
 
-        # Área de contenido
-        self._contenedor = ttk.Frame(area_principal, padding=(20, 14, 20, 14))
+        self._contenedor = ttk.Frame(area_principal, padding=(24, 16, 24, 16))
         self._contenedor.pack(side="left", fill="both", expand=True)
 
-        # Frames de cada sección
+
         self.tab_docentes    = ttk.Frame(self._contenedor, padding=4)
         self.tab_asignaturas = ttk.Frame(self._contenedor, padding=4)
         self.tab_espacios    = ttk.Frame(self._contenedor, padding=4)
@@ -213,52 +214,87 @@ class KhronoacInterfaz:
         self._construir_tab_espacios()
         self._construir_tab_horario()
 
-        # ── Botones del sidebar ───────────────────────────────────────────────
+        
         self._btn_sidebar: dict[str, tk.Button] = {}
         self._frame_activo: ttk.Frame | None = None
 
+        tk.Frame(self._sidebar, bg="#0d1420", height=20).pack()
+        tk.Label(self._sidebar, text="MENÚ", font=("Segoe UI", 7, "bold"),
+                 bg="#0d1420", fg="#2d3f5a").pack(anchor="w", padx=20, pady=(0, 6))
+
         secciones = [
-            ("  👤   Docentes",           self.tab_docentes),
-            ("  📚   Asignaturas",         self.tab_asignaturas),
-            ("  🏫   Aulas y Labs",        self.tab_espacios),
-            ("  🗓   Planificar Horario",  self.tab_horario),
+            ("👤", "Docentes",          self.tab_docentes),
+            ("📚", "Asignaturas",        self.tab_asignaturas),
+            ("🏫", "Aulas y Labs",       self.tab_espacios),
+            ("🗓", "Planificar Horario", self.tab_horario),
         ]
 
-        tk.Frame(self._sidebar, bg="#131c2e", height=18).pack()  # margen superior
+        for icono, etiqueta, frame in secciones:
+            contenedor_btn = tk.Frame(self._sidebar, bg="#0d1420")
+            contenedor_btn.pack(fill="x", pady=1)
 
-        for texto, frame in secciones:
-            btn = tk.Button(
-                self._sidebar,
-                text=texto,
-                anchor="w",
-                font=("Segoe UI", 10, "bold"),
-                bg="#131c2e",
-                fg="#7a8faa",
-                activebackground="#1e2d45",
-                activeforeground="#ffffff",
-                relief="flat",
-                bd=0,
-                padx=18,
-                pady=12,
-                cursor="hand2",
-                command=lambda f=frame, t=texto: self._cambiar_seccion(t, f),
-            )
-            btn.pack(fill="x", pady=1)
-            self._btn_sidebar[texto] = btn
+            indicador = tk.Frame(contenedor_btn, width=3, bg="#0d1420")
+            indicador.pack(side="left", fill="y")
 
-        # Mostrar la primera sección al arrancar
-        primer_texto = list(self._btn_sidebar)[0]
-        self._cambiar_seccion(primer_texto, self.tab_docentes)
+            cuerpo = tk.Frame(contenedor_btn, bg="#0d1420")
+            cuerpo.pack(side="left", fill="x", expand=True)
 
-    def _cambiar_seccion(self, texto_activo: str, frame: ttk.Frame) -> None:
+            lbl_icono = tk.Label(cuerpo, text=icono, font=("Segoe UI", 13),
+                                 bg="#0d1420", fg="#4a6080")
+            lbl_icono.pack(side="left", padx=(14, 6), pady=10)
+
+            lbl_texto = tk.Label(cuerpo, text=etiqueta, font=("Segoe UI", 10, "bold"),
+                                 bg="#0d1420", fg="#4a6080", anchor="w")
+            lbl_texto.pack(side="left", fill="x", expand=True)
+
+            clave = etiqueta
+
+            def _activar(f=frame, k=clave, ind=indicador,
+                         li=lbl_icono, lt=lbl_texto, cb=cuerpo):
+                self._cambiar_seccion(k, f, ind, li, lt, cb)
+
+            for widget in (contenedor_btn, cuerpo, lbl_icono, lbl_texto):
+                widget.bind("<Button-1>", lambda _e, fn=_activar: fn())
+                widget.config(cursor="hand2")
+
+            self._btn_sidebar[clave] = (indicador, lbl_icono, lbl_texto, cuerpo, frame)
+
+       
+        tk.Frame(self._sidebar, bg="#1a2640", height=1).pack(fill="x", padx=16, pady=12)
+        tk.Label(self._sidebar, text="Khronoac v1.0", font=("Segoe UI", 7),
+                 bg="#0d1420", fg="#2d3f5a").pack(anchor="w", padx=20)
+
+        
+        primer_clave = list(self._btn_sidebar)[0]
+        primer_datos = self._btn_sidebar[primer_clave]
+        self._cambiar_seccion(primer_clave, primer_datos[4],
+                              primer_datos[0], primer_datos[1],
+                              primer_datos[2], primer_datos[3])
+
+    def _cambiar_seccion(self, clave_activa: str, frame: ttk.Frame,
+                         indicador: tk.Frame, lbl_icono: tk.Label,
+                         lbl_texto: tk.Label, cuerpo: tk.Frame) -> None:
         """Oculta la sección actual y muestra la seleccionada."""
         if self._frame_activo is not None:
             self._frame_activo.pack_forget()
 
-        for texto, btn in self._btn_sidebar.items():
-            btn.config(bg="#131c2e", fg="#7a8faa")
+       
+        for clave, (ind, li, lt, cb, _) in self._btn_sidebar.items():
+            ind.config(bg="#0d1420")
+            li.config(bg="#0d1420", fg="#4a6080")
+            lt.config(bg="#0d1420", fg="#4a6080")
+            cb.config(bg="#0d1420")
+            for w in cb.winfo_children():
+                try:
+                    w.config(bg="#0d1420")
+                except Exception:
+                    pass
 
-        self._btn_sidebar[texto_activo].config(bg="#1e3a5f", fg="#ffffff")
+     
+        indicador.config(bg="#3b82f6")
+        lbl_icono.config(bg="#162032", fg="#93c5fd")
+        lbl_texto.config(bg="#162032", fg="#ffffff")
+        cuerpo.config(bg="#162032")
 
         frame.pack(fill="both", expand=True)
         self._frame_activo = frame
@@ -282,131 +318,316 @@ class KhronoacInterfaz:
         contenedor.columnconfigure(0, weight=1)
         return tree
 
+   
+
     @staticmethod
-    def _campo(parent: ttk.Frame, titulo: str, variable: tk.StringVar, fila: int, columna: int,
-               ancho: int = 25) -> ttk.Entry:
-        bloque = ttk.Frame(parent, style="Card.TFrame")
-        bloque.grid(row=fila, column=columna, padx=(0, 12), pady=5, sticky="ew")
-        ttk.Label(bloque, text=titulo, style="Card.TLabel").pack(anchor="w", pady=(0, 3))
+    def _seccion_header(parent: tk.Widget, icono: str, titulo: str, subtitulo: str = "") -> None:
+        """Dibuja un encabezado de sección con icono, título y línea decorativa."""
+        fila = tk.Frame(parent, bg="#0f1623")
+        fila.pack(fill="x", pady=(0, 2))
+        tk.Label(fila, text=icono, font=("Segoe UI", 16), bg="#0f1623", fg="#3b82f6").pack(side="left")
+        bloque_txt = tk.Frame(fila, bg="#0f1623")
+        bloque_txt.pack(side="left", padx=(8, 0))
+        tk.Label(bloque_txt, text=titulo, font=("Segoe UI", 13, "bold"),
+                 bg="#0f1623", fg="#e8edf5").pack(anchor="w")
+        if subtitulo:
+            tk.Label(bloque_txt, text=subtitulo, font=("Segoe UI", 8),
+                     bg="#0f1623", fg="#7a8faa").pack(anchor="w")
+        tk.Frame(parent, height=1, bg="#243047").pack(fill="x", pady=(6, 12))
+
+    @staticmethod
+    def _campo(parent: tk.Widget, titulo: str, variable: tk.StringVar,
+               fila: int, columna: int, ancho: int = 25) -> ttk.Entry:
+        """Campo de texto con etiqueta flotante sobre fondo Card."""
+        bloque = tk.Frame(parent, bg="#1a2233")
+        bloque.grid(row=fila, column=columna, padx=(0, 10), pady=(0, 8), sticky="ew")
+        tk.Label(bloque, text=titulo, font=("Segoe UI", 8), bg="#1a2233", fg="#7a8faa").pack(anchor="w", pady=(0, 2))
         entrada = ttk.Entry(bloque, textvariable=variable, width=ancho)
         entrada.pack(fill="x")
         return entrada
 
+    def _dia_toggle(self, parent: tk.Frame, dia: str) -> tk.Button:
+        """Botón toggle para seleccionar un día de la semana."""
+        var = tk.BooleanVar(value=True)
+        self.docente_dias_vars[dia] = var
+
+        ACTIVO   = ("#1e3a5f", "#3b82f6", "#93c5fd")   
+        INACTIVO = ("#151e2d", "#243047", "#4a5568")
+
+        btn = tk.Button(
+            parent,
+            text=dia[:3],
+            width=5,
+            font=("Segoe UI", 9, "bold"),
+            relief="flat", bd=0,
+            cursor="hand2",
+        )
+
+        def _actualizar():
+            estado = var.get()
+            bg, _, fg = ACTIVO if estado else INACTIVO
+            btn.config(bg=bg, fg=fg, activebackground=bg, activeforeground=fg)
+
+        def _toggle():
+            var.set(not var.get())
+            _actualizar()
+
+        btn.config(command=_toggle)
+        _actualizar()
+        return btn
+
+   
+
     def _construir_tab_docentes(self) -> None:
-        formulario = ttk.Frame(self.tab_docentes, style="Card.TFrame", padding=12)
-        formulario.pack(fill="x", pady=(0, 12))
-        self.doc_cedula = tk.StringVar()
-        self.doc_nombres = tk.StringVar()
+        self._seccion_header(
+            self.tab_docentes, "👤", "Gestión de Docentes",
+            "Registra, edita y elimina los docentes del período académico"
+        )
+
+       
+        card = tk.Frame(self.tab_docentes, bg="#1a2233", padx=16, pady=14)
+        card.pack(fill="x", pady=(0, 10))
+        tk.Frame(card, height=2, bg="#3b82f6").pack(fill="x", pady=(0, 12))  
+
+        self.doc_cedula    = tk.StringVar()
+        self.doc_nombres   = tk.StringVar()
         self.doc_apellidos = tk.StringVar()
-        self.doc_correo = tk.StringVar()
-        self.doc_titulo = tk.StringVar()
+        self.doc_correo    = tk.StringVar()
+        self.doc_titulo    = tk.StringVar()
+
+        grid = tk.Frame(card, bg="#1a2233")
+        grid.pack(fill="x")
         for col in range(5):
-            formulario.columnconfigure(col, weight=1)
-        self._campo(formulario, "Cédula / identificador", self.doc_cedula, 0, 0)
-        self._campo(formulario, "Nombres", self.doc_nombres, 0, 1)
-        self._campo(formulario, "Apellidos", self.doc_apellidos, 0, 2)
-        self._campo(formulario, "Correo electrónico", self.doc_correo, 0, 3)
-        self._campo(formulario, "Título académico", self.doc_titulo, 0, 4)
+            grid.columnconfigure(col, weight=1)
 
-        dias = ttk.Frame(formulario, style="Card.TFrame")
-        dias.grid(row=1, column=0, columnspan=5, sticky="w", pady=(8, 3))
-        ttk.Label(dias, text="Disponibilidad semanal  (07:00 – 20:00):", style="Card.TLabel").pack(side="left", padx=(0, 14))
+        self._campo(grid, "Cédula / identificador", self.doc_cedula,    0, 0)
+        self._campo(grid, "Nombres",                self.doc_nombres,   0, 1)
+        self._campo(grid, "Apellidos",              self.doc_apellidos, 0, 2)
+        self._campo(grid, "Correo electrónico",     self.doc_correo,    0, 3)
+        self._campo(grid, "Título académico",       self.doc_titulo,    0, 4)
+
+       
+        fila_dias = tk.Frame(card, bg="#1a2233")
+        fila_dias.pack(fill="x", pady=(4, 0))
+        tk.Label(fila_dias, text="Disponibilidad semanal  (07:00 – 20:00)",
+                 font=("Segoe UI", 8), bg="#1a2233", fg="#7a8faa").pack(side="left", padx=(0, 14))
         for dia in self.dias:
-            variable = tk.BooleanVar(value=True)
-            self.docente_dias_vars[dia] = variable
-            ttk.Checkbutton(dias, text=dia, variable=variable).pack(side="left", padx=4)
+            self._dia_toggle(fila_dias, dia).pack(side="left", padx=3)
 
-        acciones = ttk.Frame(formulario, style="Card.TFrame")
-        acciones.grid(row=2, column=0, columnspan=5, sticky="e", pady=(8, 0))
-        ttk.Button(acciones, text="  ✔  Guardar docente", style="Accent.TButton", command=self.acciones["guardar_docente"]).pack(side="left", padx=5)
-        ttk.Button(acciones, text="  ✕  Limpiar", command=self.acciones["limpiar_docente"]).pack(side="left", padx=5)
+       
+        fila_btn = tk.Frame(card, bg="#1a2233")
+        fila_btn.pack(fill="x", pady=(12, 0))
+        tk.Frame(fila_btn, bg="#1a2233").pack(side="left", expand=True)   
+        ttk.Button(fila_btn, text="  ✔  Guardar docente", style="Accent.TButton",
+                   command=self.acciones["guardar_docente"]).pack(side="left", padx=(0, 6))
+        ttk.Button(fila_btn, text="  ✕  Limpiar",
+                   command=self.acciones["limpiar_docente"]).pack(side="left")
 
-        ttk.Button(self.tab_docentes, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self.acciones["eliminar_docente"]).pack(anchor="e", pady=(0, 6))
-        columnas = (("cedula", "Identificador", 120), ("nombre", "Docente", 220),
-                    ("correo", "Correo", 220), ("titulo", "Título", 180), ("dias", "Días disponibles", 250))
+      
+        fila_tabla = tk.Frame(self.tab_docentes, bg="#0f1623")
+        fila_tabla.pack(fill="x", pady=(4, 4))
+        tk.Label(fila_tabla, text="Docentes registrados", font=("Segoe UI", 9, "bold"),
+                 bg="#0f1623", fg="#c7d8f0").pack(side="left")
+        ttk.Button(fila_tabla, text="  🗑  Eliminar seleccionado", style="Danger.TButton",
+                   command=self.acciones["eliminar_docente"]).pack(side="right")
+
+        columnas = (
+            ("cedula",  "Identificador",   120),
+            ("nombre",  "Docente",         220),
+            ("correo",  "Correo",          220),
+            ("titulo",  "Título",          180),
+            ("dias",    "Días disponibles",250),
+        )
         self.tree_docentes = self._crear_tree(self.tab_docentes, columnas)
         self.tree_docentes.bind("<<TreeviewSelect>>", self.__evento_seleccion_docente)
 
     def _construir_tab_asignaturas(self) -> None:
-        formulario = ttk.Frame(self.tab_asignaturas, style="Card.TFrame", padding=12)
-        formulario.pack(fill="x", pady=(0, 12))
-        self.asig_nombre = tk.StringVar()
-        self.asig_horas = tk.StringVar(value="3")
-        self.asig_demanda = tk.StringVar(value="30")
-        self.asig_docente = tk.StringVar()
-        self.asig_laboratorio = tk.BooleanVar()
-        for col in range(4):
-            formulario.columnconfigure(col, weight=1)
-        self._campo(formulario, "Nombre de la asignatura", self.asig_nombre, 0, 0)
-        self._campo(formulario, "Horas por semana", self.asig_horas, 0, 1)
-        self._campo(formulario, "Demanda estimada de estudiantes", self.asig_demanda, 0, 2)
-        bloque = ttk.Frame(formulario, style="Card.TFrame")
-        bloque.grid(row=0, column=3, padx=(0, 10), pady=5, sticky="ew")
-        ttk.Label(bloque, text="Docente responsable", style="Card.TLabel").pack(anchor="w", pady=(0, 3))
-        self.combo_docente = ttk.Combobox(bloque, textvariable=self.asig_docente, state="readonly")
-        self.combo_docente.pack(fill="x")
-        ttk.Checkbutton(formulario, text="Requiere laboratorio", variable=self.asig_laboratorio).grid(row=1, column=0, sticky="w", pady=7)
-        acciones = ttk.Frame(formulario, style="Card.TFrame")
-        acciones.grid(row=1, column=1, columnspan=3, sticky="e", pady=5)
-        ttk.Button(acciones, text="  ✔  Guardar asignatura", style="Accent.TButton", command=self.acciones["guardar_asignatura"]).pack(side="left", padx=5)
-        ttk.Button(acciones, text="  ✕  Limpiar", command=self.acciones["limpiar_asignatura"]).pack(side="left", padx=5)
+        self._seccion_header(
+            self.tab_asignaturas, "📚", "Gestión de Asignaturas",
+            "Vincula asignaturas con docentes y configura su demanda"
+        )
 
-        ttk.Button(self.tab_asignaturas, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self.acciones["eliminar_asignatura"]).pack(anchor="e", pady=(0, 6))
-        columnas = (("nombre", "Asignatura", 220), ("horas", "Horas/semana", 110),
-                    ("demanda", "Demanda estimada", 140), ("docente", "Docente", 220), ("lab", "Laboratorio", 110))
+        card = tk.Frame(self.tab_asignaturas, bg="#1a2233", padx=16, pady=14)
+        card.pack(fill="x", pady=(0, 10))
+        tk.Frame(card, height=2, bg="#6366f1").pack(fill="x", pady=(0, 12))
+
+        self.asig_nombre      = tk.StringVar()
+        self.asig_horas       = tk.StringVar(value="3")
+        self.asig_demanda     = tk.StringVar(value="30")
+        self.asig_docente     = tk.StringVar()
+        self.asig_laboratorio = tk.BooleanVar()
+
+        grid = tk.Frame(card, bg="#1a2233")
+        grid.pack(fill="x")
+        for col in range(4):
+            grid.columnconfigure(col, weight=1)
+
+        self._campo(grid, "Nombre de la asignatura",          self.asig_nombre,  0, 0)
+        self._campo(grid, "Horas por semana",                 self.asig_horas,   0, 1)
+        self._campo(grid, "Demanda estimada de estudiantes",  self.asig_demanda, 0, 2)
+
+        bloque_doc = tk.Frame(grid, bg="#1a2233")
+        bloque_doc.grid(row=0, column=3, padx=(0, 0), pady=(0, 8), sticky="ew")
+        tk.Label(bloque_doc, text="Docente responsable", font=("Segoe UI", 8),
+                 bg="#1a2233", fg="#7a8faa").pack(anchor="w", pady=(0, 2))
+        self.combo_docente = ttk.Combobox(bloque_doc, textvariable=self.asig_docente, state="readonly")
+        self.combo_docente.pack(fill="x")
+
+        fila_lab = tk.Frame(card, bg="#1a2233")
+        fila_lab.pack(fill="x", pady=(2, 0))
+
+      
+        lab_var  = self.asig_laboratorio
+        lab_lbl  = tk.Label(fila_lab, text="⬜  Requiere laboratorio", font=("Segoe UI", 9),
+                            bg="#1a2233", fg="#7a8faa", cursor="hand2")
+        lab_lbl.pack(side="left")
+
+        def _toggle_lab(_=None):
+            lab_var.set(not lab_var.get())
+            lab_lbl.config(
+                text=("☑  Requiere laboratorio" if lab_var.get() else "⬜  Requiere laboratorio"),
+                fg=("#3b82f6" if lab_var.get() else "#7a8faa"),
+            )
+        lab_lbl.bind("<Button-1>", _toggle_lab)
+
+        fila_btn = tk.Frame(card, bg="#1a2233")
+        fila_btn.pack(fill="x", pady=(12, 0))
+        tk.Frame(fila_btn, bg="#1a2233").pack(side="left", expand=True)
+        ttk.Button(fila_btn, text="  ✔  Guardar asignatura", style="Accent.TButton",
+                   command=self.acciones["guardar_asignatura"]).pack(side="left", padx=(0, 6))
+        ttk.Button(fila_btn, text="  ✕  Limpiar",
+                   command=self.acciones["limpiar_asignatura"]).pack(side="left")
+
+        fila_tabla = tk.Frame(self.tab_asignaturas, bg="#0f1623")
+        fila_tabla.pack(fill="x", pady=(4, 4))
+        tk.Label(fila_tabla, text="Asignaturas registradas", font=("Segoe UI", 9, "bold"),
+                 bg="#0f1623", fg="#c7d8f0").pack(side="left")
+        ttk.Button(fila_tabla, text="  🗑  Eliminar seleccionado", style="Danger.TButton",
+                   command=self.acciones["eliminar_asignatura"]).pack(side="right")
+
+        columnas = (
+            ("nombre",  "Asignatura",        220),
+            ("horas",   "Horas/semana",       110),
+            ("demanda", "Demanda estimada",   140),
+            ("docente", "Docente",            220),
+            ("lab",     "Laboratorio",        110),
+        )
         self.tree_asignaturas = self._crear_tree(self.tab_asignaturas, columnas)
         self.tree_asignaturas.bind("<<TreeviewSelect>>", self.__evento_seleccion_asignatura)
 
     def _construir_tab_espacios(self) -> None:
-        formulario = ttk.Frame(self.tab_espacios, style="Card.TFrame", padding=12)
-        formulario.pack(fill="x", pady=(0, 12))
-        self.esp_codigo = tk.StringVar()
-        self.esp_capacidad = tk.StringVar(value="30")
-        self.esp_tipo = tk.StringVar(value="Aula")
-        self.esp_tipo_lab = tk.StringVar()
-        self.esp_equipos = tk.StringVar()
-        for col in range(4):
-            formulario.columnconfigure(col, weight=1)
-        self._campo(formulario, "Código del espacio", self.esp_codigo, 0, 0)
-        self._campo(formulario, "Capacidad máxima", self.esp_capacidad, 0, 1)
-        bloque_tipo = ttk.Frame(formulario, style="Card.TFrame")
-        bloque_tipo.grid(row=0, column=2, padx=(0, 12), pady=5, sticky="ew")
-        ttk.Label(bloque_tipo, text="Tipo", style="Card.TLabel").pack(anchor="w", pady=(0, 3))
-        tipo = ttk.Combobox(bloque_tipo, textvariable=self.esp_tipo, values=("Aula", "Laboratorio"), state="readonly")
-        tipo.pack(fill="x")
-        self._campo(formulario, "Tipo de laboratorio", self.esp_tipo_lab, 0, 3)
-        self._campo(formulario, "Equipos especiales", self.esp_equipos, 1, 0)
-        ttk.Label(formulario, text="Los datos de laboratorio solo se usan cuando el tipo es Laboratorio.", style="Card.TLabel").grid(row=1, column=1, columnspan=2, sticky="w")
-        acciones = ttk.Frame(formulario, style="Card.TFrame")
-        acciones.grid(row=1, column=3, sticky="e", pady=5)
-        ttk.Button(acciones, text="  ✔  Guardar espacio", style="Accent.TButton", command=self.acciones["guardar_espacio"]).pack(side="left", padx=5)
-        ttk.Button(acciones, text="  ✕  Limpiar", command=self.acciones["limpiar_espacio"]).pack(side="left", padx=5)
+        self._seccion_header(
+            self.tab_espacios, "🏫", "Aulas y Laboratorios",
+            "Administra los espacios físicos disponibles y su capacidad"
+        )
 
-        ttk.Button(self.tab_espacios, text="  🗑  Eliminar seleccionado", style="Danger.TButton", command=self.acciones["eliminar_espacio"]).pack(anchor="e", pady=(0, 6))
-        columnas = (("codigo", "Código", 150), ("tipo", "Tipo", 140),
-                    ("capacidad", "Capacidad", 110), ("detalle", "Equipamiento / tipo", 360))
+        card = tk.Frame(self.tab_espacios, bg="#1a2233", padx=16, pady=14)
+        card.pack(fill="x", pady=(0, 10))
+        tk.Frame(card, height=2, bg="#10b981").pack(fill="x", pady=(0, 12))
+
+        self.esp_codigo    = tk.StringVar()
+        self.esp_capacidad = tk.StringVar(value="30")
+        self.esp_tipo      = tk.StringVar(value="Aula")
+        self.esp_tipo_lab  = tk.StringVar()
+        self.esp_equipos   = tk.StringVar()
+
+        grid = tk.Frame(card, bg="#1a2233")
+        grid.pack(fill="x")
+        for col in range(4):
+            grid.columnconfigure(col, weight=1)
+
+        self._campo(grid, "Código del espacio",  self.esp_codigo,    0, 0)
+        self._campo(grid, "Capacidad máxima",    self.esp_capacidad, 0, 1)
+
+        bloque_tipo = tk.Frame(grid, bg="#1a2233")
+        bloque_tipo.grid(row=0, column=2, padx=(0, 10), pady=(0, 8), sticky="ew")
+        tk.Label(bloque_tipo, text="Tipo", font=("Segoe UI", 8),
+                 bg="#1a2233", fg="#7a8faa").pack(anchor="w", pady=(0, 2))
+        ttk.Combobox(bloque_tipo, textvariable=self.esp_tipo,
+                     values=("Aula", "Laboratorio"), state="readonly").pack(fill="x")
+
+        self._campo(grid, "Tipo de laboratorio", self.esp_tipo_lab, 0, 3)
+        self._campo(grid, "Equipos especiales",  self.esp_equipos,  1, 0)
+
+        tk.Label(grid, text="ℹ  Los campos de laboratorio solo aplican cuando el tipo es 'Laboratorio'.",
+                 font=("Segoe UI", 8), bg="#1a2233", fg="#4a5568").grid(
+                     row=1, column=1, columnspan=2, sticky="w", pady=(4, 0))
+
+        fila_btn = tk.Frame(card, bg="#1a2233")
+        fila_btn.pack(fill="x", pady=(12, 0))
+        tk.Frame(fila_btn, bg="#1a2233").pack(side="left", expand=True)
+        ttk.Button(fila_btn, text="  ✔  Guardar espacio", style="Accent.TButton",
+                   command=self.acciones["guardar_espacio"]).pack(side="left", padx=(0, 6))
+        ttk.Button(fila_btn, text="  ✕  Limpiar",
+                   command=self.acciones["limpiar_espacio"]).pack(side="left")
+
+        fila_tabla = tk.Frame(self.tab_espacios, bg="#0f1623")
+        fila_tabla.pack(fill="x", pady=(4, 4))
+        tk.Label(fila_tabla, text="Espacios registrados", font=("Segoe UI", 9, "bold"),
+                 bg="#0f1623", fg="#c7d8f0").pack(side="left")
+        ttk.Button(fila_tabla, text="  🗑  Eliminar seleccionado", style="Danger.TButton",
+                   command=self.acciones["eliminar_espacio"]).pack(side="right")
+
+        columnas = (
+            ("codigo",   "Código",              150),
+            ("tipo",     "Tipo",                140),
+            ("capacidad","Capacidad",            110),
+            ("detalle",  "Equipamiento / tipo",  360),
+        )
         self.tree_espacios = self._crear_tree(self.tab_espacios, columnas)
         self.tree_espacios.bind("<<TreeviewSelect>>", self.__evento_seleccion_espacio)
 
     def _construir_tab_horario(self) -> None:
-        controles = ttk.Frame(self.tab_horario, style="Card.TFrame", padding=12)
-        controles.pack(fill="x", pady=(0, 12))
-        ttk.Label(controles, text="Mínimo de estudiantes por paralelo:", style="Card.TLabel").pack(side="left")
+        self._seccion_header(
+            self.tab_horario, "🗓", "Planificador de Horarios",
+            "Genera automáticamente el horario sin conflictos de docente, aula o paralelo"
+        )
+
+        
+        card = tk.Frame(self.tab_horario, bg="#1a2233", padx=16, pady=14)
+        card.pack(fill="x", pady=(0, 10))
+        tk.Frame(card, height=2, bg="#f59e0b").pack(fill="x", pady=(0, 12))
+
+        fila_ctrl = tk.Frame(card, bg="#1a2233")
+        fila_ctrl.pack(fill="x")
+
+        blq_min = tk.Frame(fila_ctrl, bg="#1a2233")
+        blq_min.pack(side="left", padx=(0, 20))
+        tk.Label(blq_min, text="Mínimo de estudiantes por paralelo",
+                 font=("Segoe UI", 8), bg="#1a2233", fg="#7a8faa").pack(anchor="w")
         self.minimo_var = tk.StringVar(value="10")
-        ttk.Spinbox(controles, from_=1, to=200, textvariable=self.minimo_var, width=7).pack(side="left", padx=10)
-        ttk.Button(controles, text="  ▶  Generar horario", style="Accent.TButton", command=self.acciones["generar_horario"]).pack(side="left", padx=8)
-        ttk.Button(controles, text="  ↓  Exportar JSON", command=self.acciones["exportar_horario"]).pack(side="left", padx=6)
-        ttk.Label(
-            self.tab_horario,
-            text="Cada hora se planifica como un bloque de 60 min · Lunes a Viernes · 07:00 – 20:00 · Sin conflictos de docente, aula o paralelo.",
-            style="Subtitle.TLabel",
-        ).pack(anchor="w", pady=(6, 10))
-        columnas = (("dia", "Día", 100), ("inicio", "Inicio", 75), ("fin", "Fin", 75),
-                    ("asignatura", "Asignatura", 180), ("paralelo", "Paralelo / grupo", 230),
-                    ("demanda", "Estudiantes", 90), ("docente", "Docente", 180), ("espacio", "Aula / laboratorio", 150))
+        ttk.Spinbox(blq_min, from_=1, to=200, textvariable=self.minimo_var, width=8).pack(anchor="w", pady=(2, 0))
+
+        sep_v = tk.Frame(fila_ctrl, width=1, bg="#243047")
+        sep_v.pack(side="left", fill="y", padx=(0, 20))
+
+        ttk.Button(fila_ctrl, text="  ▶  Generar horario", style="Accent.TButton",
+                   command=self.acciones["generar_horario"]).pack(side="left", padx=(0, 8))
+        ttk.Button(fila_ctrl, text="  ↓  Exportar JSON",
+                   command=self.acciones["exportar_horario"]).pack(side="left")
+
+        
+        fila_tabla = tk.Frame(self.tab_horario, bg="#0f1623")
+        fila_tabla.pack(fill="x", pady=(4, 4))
+        tk.Label(fila_tabla, text="Horario generado", font=("Segoe UI", 9, "bold"),
+                 bg="#0f1623", fg="#c7d8f0").pack(side="left")
+
+        columnas = (
+            ("dia",        "Día",                100),
+            ("inicio",     "Inicio",              75),
+            ("fin",        "Fin",                 75),
+            ("asignatura", "Asignatura",          180),
+            ("paralelo",   "Paralelo / grupo",    230),
+            ("demanda",    "Estudiantes",          90),
+            ("docente",    "Docente",             180),
+            ("espacio",    "Aula / laboratorio",  150),
+        )
         self.tree_horario = self._crear_tree(self.tab_horario, columnas)
+
         self.estado_horario = tk.StringVar(value="Registra docentes, asignaturas y espacios para comenzar.")
-        ttk.Label(self.tab_horario, textvariable=self.estado_horario, style="Subtitle.TLabel", wraplength=1000).pack(anchor="w", pady=(10, 0))
+        tk.Label(self.tab_horario, textvariable=self.estado_horario,
+                 font=("Segoe UI", 8), bg="#0f1623", fg="#7a8faa",
+                 wraplength=900, justify="left").pack(anchor="w", pady=(8, 0))
 
     def leer_formulario_docente(self) -> dict[str, Any]:
         return {
