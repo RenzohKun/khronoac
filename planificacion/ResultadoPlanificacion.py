@@ -33,6 +33,23 @@ class ResultadoPlanificacion:
             franjasSinConflicto=datos.get("franjasSinConflicto", False),
         )
 
+    def paraDocente(self, cedulaDocente: str) -> ResultadoPlanificacion:
+        # Crea una vista de planificación independiente filtrada por docente.
+        return type(self)(
+            paralelos=[
+                paralelo
+                for paralelo in self.paralelos
+                if paralelo.get("docenteCedula") == cedulaDocente
+            ],
+            sesiones=[
+                sesion
+                for sesion in self.sesiones
+                if sesion.get("docente") == cedulaDocente
+            ],
+            estadisticas=dict(self.estadisticas),
+            franjasSinConflicto=self.franjasSinConflicto,
+        )
+
     def aDiccionario(self) -> dict[str, Any]:
         return {
             "paralelos": [dict(paralelo) for paralelo in self.paralelos],

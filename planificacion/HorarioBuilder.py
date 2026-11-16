@@ -1,4 +1,8 @@
 # Este módulo ensambla objetos Horario a partir de una planificación calculada.
+#
+# Este módulo implementa el patrón de diseño creacional Builder, en el cual se
+# crean distintos tipos de horarios que podrían existir dentro de una institución
+# empleando el mismo bloque de código.
 
 from __future__ import annotations
 
@@ -11,6 +15,7 @@ from .ResultadoPlanificacion import ResultadoPlanificacion
 
 
 class HorarioResultado:
+
     # Producto final que encapsula el objeto Horario junto con los metadatos
     # y detalle de sesiones asignadas generadas durante la construcción.
 
@@ -51,28 +56,33 @@ class HorarioResultado:
 
 
 class HorarioBuilder:
-    # Constructor concreto (Builder) para la entidad Horario.
-    # Recibe una planificación calculada y construye su representación final.
+    # Define los pasos comunes para ensamblar un Horario.
+
+    tipoHorario = "Académico Presencial"
 
     def __init__(self) -> None:
         self.reset()
 
     def reset(self) -> HorarioBuilder:
+
         # Reinicia el estado del constructor para ensamblar otro horario.
+
         self._id_horario = "HOR-001"
         self._periodo_academico = "2026-2"
-        self._tipo_horario = "Académico Presencial"
+        self._tipo_horario = self.tipoHorario
         self._resultadoPlanificacion: ResultadoPlanificacion | None = None
         return self
 
     def conIdentificador(
         self,
-        id_horario: str,
-        periodo: str,
+        id_horario: str | None = None,
+        periodo: str | None = None,
         tipo: str | None = None,
     ) -> HorarioBuilder:
-        self._id_horario = id_horario
-        self._periodo_academico = periodo
+        if id_horario is not None:
+            self._id_horario = id_horario
+        if periodo is not None:
+            self._periodo_academico = periodo
         if tipo is not None:
             self._tipo_horario = tipo
         return self
@@ -87,9 +97,11 @@ class HorarioBuilder:
         return self
 
     def construir(self) -> HorarioResultado:
+
         # Ensambla el objeto Horario según los datos configurados.
         if self._resultadoPlanificacion is None:
             raise ValueError("Falta el resultado de planificación para construir el horario.")
+
 
         # Instanciación y ensamblado del objeto central Horario
         horario = Horario(
@@ -109,158 +121,39 @@ class HorarioBuilder:
 
 
 class HorarioAcademicoBuilder(HorarioBuilder):
-    def reset(self) -> HorarioAcademicoBuilder:
-        super().reset()
-        self._tipo_horario = "Académico"
-        return self
+    # Especializa el tipo de horario sin cambiar los pasos comunes.
+
+    tipoHorario = "Académico"
 
 
 class HorarioExamenesBuilder(HorarioBuilder):
-    def reset(self) -> HorarioExamenesBuilder:
-        super().reset()
-        self._tipo_horario = "Exámenes"
-        return self
+    # Especializa el tipo de horario para una planificación de exámenes.
+
+    tipoHorario = "Exámenes"
 
 
 class HorarioDocenteBuilder(HorarioBuilder):
-    def reset(self) -> HorarioDocenteBuilder:
-        super().reset()
-        self._tipo_horario = "Horario docente"
-        self._cedulaDocente: str | None = None
-        return self
+    # Construye el horario docente desde un resultado ya filtrado.
 
-    def conDocente(self, cedulaDocente: str) -> HorarioDocenteBuilder:
-        self._cedulaDocente = cedulaDocente
-        return self
-
-    def construir(self) -> HorarioResultado:
-        if self._resultadoPlanificacion is None:
-            raise ValueError("Falta el resultado de planificación para construir el horario.")
-        if not self._cedulaDocente:
-            raise ValueError("Debe indicarse el docente para construir su horario.")
-
-        sesiones = [
-            sesion
-            for sesion in self._resultadoPlanificacion.sesiones
-            if sesion.get("docente") == self._cedulaDocente
-        ]
-        paralelos = [
-            paralelo
-            for paralelo in self._resultadoPlanificacion.paralelos
-            if paralelo.get("docenteCedula") == self._cedulaDocente
-        ]
-        self._resultadoPlanificacion = ResultadoPlanificacion(
-            paralelos=paralelos,
-            sesiones=sesiones,
-            estadisticas=dict(self._resultadoPlanificacion.estadisticas),
-            franjasSinConflicto=self._resultadoPlanificacion.franjasSinConflicto,
-        )
-        return super().construir()
+    tipoHorario = "Horario docente"
 
 
 class HorarioDirector:
-    # Clase Directora del patrón Builder.
-    # Define una receta predeterminada a partir del resultado de planificación.
+    # Ejecuta la misma secuencia para cualquier implementación de HorarioBuilder.
 
-    def __init__(self, builder: HorarioBuilder | None = None) -> None:
-        self._builder = builder or HorarioBuilder()
-
-    def construirPlanificacionEstandar(
+    def construir(
         self,
+        builder: HorarioBuilder,
         resultadoPlanificacion: ResultadoPlanificacion,
+        idHorario: str | None = None,
+        periodo: str | None = None,
     ) -> HorarioResultado:
-        # Coordina los pasos para una construcción académica estándar.
-        self._builder.reset()
-        self._builder.conIdentificador(
-            "HOR-DIR-01",
-            "2026-2",
-            "Carrera Software",
-        )
-        return (
-            self._builder
-            .conResultadoPlanificacion(resultadoPlanificacion)
-            .construir()
-        )
-
-    def construirHorarioAcademico(
-        self,
-        resultadoPlanificacion: ResultadoPlanificacion,
-        idHorario: str = "HOR-ACA-01",
-        periodo: str = "Periodo actual",
-    ) -> HorarioResultado:
-        builder = HorarioAcademicoBuilder()
+        # El director depende de la abstracción, no de constructores concretos.
+        builder.reset()
+        if idHorario is not None or periodo is not None:
+            builder.conIdentificador(idHorario, periodo)
         return (
             builder
-            .conIdentificador(idHorario, periodo, "Académico")
             .conResultadoPlanificacion(resultadoPlanificacion)
             .construir()
         )
-
-    def construirHorarioExamenes(
-        self,
-        resultadoPlanificacion: ResultadoPlanificacion,
-        idHorario: str = "HOR-EXA-01",
-        periodo: str = "Periodo actual",
-    ) -> HorarioResultado:
-        builder = HorarioExamenesBuilder()
-        return (
-            builder
-            .conIdentificador(idHorario, periodo, "Exámenes")
-            .conResultadoPlanificacion(resultadoPlanificacion)
-            .construir()
-        )
-
-    def construirHorarioDocente(
-        self,
-        resultadoPlanificacion: ResultadoPlanificacion,
-        cedulaDocente: str,
-        idHorario: str = "HOR-DOC-01",
-        periodo: str = "Periodo actual",
-    ) -> HorarioResultado:
-        builder = HorarioDocenteBuilder()
-        return (
-            builder
-            .conIdentificador(idHorario, periodo, "Horario docente")
-            .conResultadoPlanificacion(resultadoPlanificacion)
-            .conDocente(cedulaDocente)
-            .construir()
-        )
-
-
-if __name__ == "__main__":
-    resultadoPlanificacion = ResultadoPlanificacion(
-        paralelos=[
-            {
-                "asignatura": "Programación Orientada a Objetos",
-                "nombreParalelo": "Programación Orientada a Objetos 1",
-                "numero": 1,
-                "demanda": 25,
-                "cupoMaximo": 35,
-                "docenteCedula": "1312345678",
-                "horas": 1,
-                "requiereLaboratorio": True,
-            }
-        ],
-        sesiones=[
-            {
-                "dia": "Lunes",
-                "inicio": "07:00",
-                "fin": "08:00",
-                "asignatura": "Programación Orientada a Objetos",
-                "paralelo": "Programación Orientada a Objetos 1",
-                "numeroParalelo": 1,
-                "estudiantes": 25,
-                "docente": "1312345678",
-                "espacio": "LAB-204",
-            }
-        ],
-        estadisticas={"minimoEstudiantes": 12, "bloqueMinutos": 60},
-        franjasSinConflicto=True,
-    )
-    resultado = (
-        HorarioBuilder()
-        .conIdentificador("HOR-2026-POO", "Periodo 2026-2")
-        .conResultadoPlanificacion(resultadoPlanificacion)
-        .construir()
-    )
-    print(resultado)
