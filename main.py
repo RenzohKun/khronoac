@@ -1,20 +1,16 @@
 from __future__ import annotations
-import math
 import tkinter as tk
-from datetime import time
 from pathlib import Path
 from typing import Any
 from modelos.Asignatura    import Asignatura
-from modelos.Docente       import Docente
-from modelos.EspacioFisico import EspacioFisico
-from modelos.Estudiante    import Estudiante
-from modelos.FranjaHoraria import FranjaHoraria
-from modelos.Horario       import Horario
-from modelos.Laboratorio   import Laboratorio
-from modelos.Paralelo      import Paralelo
 from persistencia      import KhronoacPersistenciaDatos
 from interfaz          import KhronoacInterfaz
-from fabrica_espacios  import crear_espacio
+from fabrica_espacios  import crearEspacio
+from planificacion import (
+    DatosPlanificacionInvalidos,
+    ServicioPlanificacionHorario,
+    SinPlanificacionDisponible,
+)
 
 
 DIAS       = ("Lunes", "Martes", "Miércoles", "Jueves", "Viernes")
@@ -48,44 +44,48 @@ class KhronoacApp(tk.Tk):
         self.persistencia = KhronoacPersistenciaDatos(
             Path(__file__).with_name("khronoac_datos")
         )
-        self.datos                             = self.persistencia.cargar_datos()
+        self.servicioPlanificacion = ServicioPlanificacionHorario(
+            DIAS, HORA_INICIO, HORA_FIN
+        )
+        self.datos                             = self.persistencia.cargarDatos()
         self.plan_actual: dict[str, Any] | None = self.datos["ultimoHorario"]
         self.docente_editando:   str | None    = None
         self.asignatura_editando: str | None   = None
         self.espacio_editando:   str | None    = None
 
       
-        self.interfaz = KhronoacInterfaz(self, self._crear_acciones_interfaz(), DIAS)
+        self.interfaz = KhronoacInterfaz(self, self.crearAccionesInterfaz(), DIAS)
         self.interfaz.construir()
-        self._refrescar_listas()
+        self.refrescarListas()
 
-    def _crear_acciones_interfaz(self) -> dict[str, Any]:
+    def crearAccionesInterfaz(self) -> dict[str, Any]:
         """Mapa de callbacks que la interfaz puede invocar."""
         return {
-            "guardar_docente":      self._guardar_docente,
-            "limpiar_docente":      self._limpiar_docente,
-            "eliminar_docente":     self._eliminar_docente,
-            "seleccionar_docente":  self._seleccionar_docente,
-            "guardar_asignatura":   self._guardar_asignatura,
-            "limpiar_asignatura":   self._limpiar_asignatura,
-            "eliminar_asignatura":  self._eliminar_asignatura,
-            "seleccionar_asignatura": self._seleccionar_asignatura,
-            "guardar_espacio":      self._guardar_espacio,
-            "limpiar_espacio":      self._limpiar_espacio,
-            "eliminar_espacio":     self._eliminar_espacio,
-            "seleccionar_espacio":  self._seleccionar_espacio,
-            "generar_horario":      self._generar_horario,
-            "exportar_horario":     self._exportar_horario,
+            "guardarDocente":      self.guardarDocente,
+            "limpiarDocente":      self.limpiarDocente,
+            "eliminarDocente":     self.eliminarDocente,
+            "seleccionarDocente":  self.seleccionarDocente,
+            "guardarAsignatura":   self.guardarAsignatura,
+            "limpiarAsignatura":   self.limpiarAsignatura,
+            "eliminarAsignatura":  self.eliminarAsignatura,
+            "seleccionarAsignatura": self.seleccionarAsignatura,
+            "guardarEspacio":      self.guardarEspacio,
+            "limpiarEspacio":      self.limpiarEspacio,
+            "eliminarEspacio":     self.eliminarEspacio,
+            "seleccionarEspacio":  self.seleccionarEspacio,
+            "generarHorario":      self.generarHorario,
+            "construirHorarioDocente": self.construirHorarioDocente,
+            "exportarHorario":     self.exportarHorario,
         }
 
 
 
-    def _invalidar_plan(self) -> None:
+    def invalidarPlan(self) -> None:
         self.plan_actual = None
         self.datos["ultimoHorario"] = None
 
     @staticmethod
-    def _indice_por_clave(
+    def indicePorClave(
         registros: list[dict[str, Any]], clave: str, valor: str
     ) -> int | None:
         return next(
@@ -93,30 +93,30 @@ class KhronoacApp(tk.Tk):
             None,
         )
 
-    def _obtener_docente(self, cedula: str) -> dict[str, Any] | None:
+    def obtenerDocente(self, cedula: str) -> dict[str, Any] | None:
         return next(
             (persona for persona in self.datos["docentes"] if persona["cedula"] == cedula),
             None,
         )
 
-    def _refrescar_listas(self) -> None:
-        self.interfaz.actualizar_listas(
+    def refrescarListas(self) -> None:
+        self.interfaz.actualizarListas(
             self.datos["docentes"],
             self.datos["asignaturas"],
             self.datos["espacios"],
         )
-        self._mostrar_plan_guardado()
+        self.mostrarPlanGuardado()
 
    
 
-    def _guardar_docente(self) -> None:
-        formulario = self.interfaz.leer_formulario_docente()
+    def guardarDocente(self) -> None:
+        formulario = self.interfaz.leerFormularioDocente()
         cedula    = formulario["cedula"].strip()
         nombres   = formulario["nombres"].strip()
         apellidos = formulario["apellidos"].strip()
 
         if not all((cedula, nombres, apellidos)):
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Datos incompletos",
                 "Cédula, nombres y apellidos son obligatorios.",
             )
@@ -124,18 +124,18 @@ class KhronoacApp(tk.Tk):
 
         dias = formulario["diasDisponibles"]
         if not dias:
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Disponibilidad requerida",
                 "Selecciona al menos un día disponible.",
             )
             return
 
         clave_anterior = self.docente_editando
-        indice_nuevo   = self._indice_por_clave(self.datos["docentes"], "cedula", cedula)
+        indice_nuevo   = self.indicePorClave(self.datos["docentes"], "cedula", cedula)
 
        
         if clave_anterior is None and indice_nuevo is not None:
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Identificador duplicado",
                 "Ya existe otro docente con esa cédula.",
             )
@@ -154,12 +154,12 @@ class KhronoacApp(tk.Tk):
             self.datos["docentes"].append(docente)
 
         else:
-            indice_anterior = self._indice_por_clave(
+            indice_anterior = self.indicePorClave(
                 self.datos["docentes"], "cedula", clave_anterior
             )
 
             if indice_anterior is None:
-                self.interfaz.mostrar_error(
+                self.interfaz.mostrarError(
                     "Error",
                     "No se encontró el docente que intentas editar.",
                 )
@@ -167,7 +167,7 @@ class KhronoacApp(tk.Tk):
 
           
             if indice_nuevo is not None and cedula != clave_anterior:
-                self.interfaz.mostrar_aviso(
+                self.interfaz.mostrarAviso(
                     "Identificador duplicado",
                     "Esa cédula ya pertenece a otro docente.",
                 )
@@ -181,30 +181,30 @@ class KhronoacApp(tk.Tk):
                     if asignatura["docenteCedula"] == clave_anterior:
                         asignatura["docenteCedula"] = cedula
 
-        self._invalidar_plan()
-        self.persistencia.guardar_datos(self.datos)
-        self._limpiar_docente()
-        self._refrescar_listas()
-        self.interfaz.mostrar_informacion("Éxito", "Docente guardado correctamente.")
+        self.invalidarPlan()
+        self.persistencia.guardarDatos(self.datos)
+        self.limpiarDocente()
+        self.refrescarListas()
+        self.interfaz.mostrarInformacion("Éxito", "Docente guardado correctamente.")
 
-    def _seleccionar_docente(self, cedula: str) -> None:
-        docente = self._obtener_docente(cedula)
+    def seleccionarDocente(self, cedula: str) -> None:
+        docente = self.obtenerDocente(cedula)
         if docente is None:
             return
         self.docente_editando = docente["cedula"]
-        self.interfaz.cargar_docente(docente)
+        self.interfaz.cargarDocente(docente)
 
-    def _limpiar_docente(self) -> None:
+    def limpiarDocente(self) -> None:
         self.docente_editando = None
-        self.interfaz.limpiar_docente()
+        self.interfaz.limpiarDocente()
 
-    def _eliminar_docente(self) -> None:
-        cedula = self.interfaz.docente_seleccionado()
+    def eliminarDocente(self) -> None:
+        cedula = self.interfaz.docenteSeleccionado()
         if cedula is None:
             return
 
         if any(asig["docenteCedula"] == cedula for asig in self.datos["asignaturas"]):
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Docente asignado",
                 "Reasigna o elimina las asignaturas de este docente antes de eliminarlo.",
             )
@@ -214,14 +214,14 @@ class KhronoacApp(tk.Tk):
             self.datos["docentes"] = [
                 d for d in self.datos["docentes"] if d["cedula"] != cedula
             ]
-            self._invalidar_plan()
-            self.persistencia.guardar_datos(self.datos)
-            self._limpiar_docente()
-            self._refrescar_listas()
+            self.invalidarPlan()
+            self.persistencia.guardarDatos(self.datos)
+            self.limpiarDocente()
+            self.refrescarListas()
 
 
-    def _guardar_asignatura(self) -> None:
-        formulario = self.interfaz.leer_formulario_asignatura()
+    def guardarAsignatura(self) -> None:
+        formulario = self.interfaz.leerFormularioAsignatura()
         nombre     = formulario["nombreAsignatura"].strip()
 
         try:
@@ -230,7 +230,7 @@ class KhronoacApp(tk.Tk):
             if horas < 1 or demanda < 1:
                 raise ValueError
         except ValueError:
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Revisa los valores",
                 "Las horas semanales y la demanda deben ser enteros mayores que cero.",
             )
@@ -238,7 +238,7 @@ class KhronoacApp(tk.Tk):
 
         cedula_docente = formulario["docenteCedula"]
         if not nombre or not cedula_docente:
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Datos incompletos",
                 "Escribe el nombre y selecciona un docente registrado.",
             )
@@ -254,7 +254,7 @@ class KhronoacApp(tk.Tk):
         }
 
         clave_anterior = self.asignatura_editando or nombre
-        existente = self._indice_por_clave(
+        existente = self.indicePorClave(
             self.datos["asignaturas"], "nombreAsignatura", clave_anterior
         )
         duplicada = next(
@@ -266,7 +266,7 @@ class KhronoacApp(tk.Tk):
             None,
         )
         if duplicada is not None:
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Asignatura duplicada", "Ya existe otra asignatura con ese nombre."
             )
             return
@@ -276,12 +276,12 @@ class KhronoacApp(tk.Tk):
         else:
             self.datos["asignaturas"][existente] = registro
 
-        self._invalidar_plan()
-        self.persistencia.guardar_datos(self.datos)
-        self._limpiar_asignatura()
-        self._refrescar_listas()
+        self.invalidarPlan()
+        self.persistencia.guardarDatos(self.datos)
+        self.limpiarAsignatura()
+        self.refrescarListas()
 
-    def _seleccionar_asignatura(self, nombre: str) -> None:
+    def seleccionarAsignatura(self, nombre: str) -> None:
         asignatura = next(
             (item for item in self.datos["asignaturas"]
              if item["nombreAsignatura"] == nombre),
@@ -290,15 +290,15 @@ class KhronoacApp(tk.Tk):
         if asignatura is None:
             return
         self.asignatura_editando = asignatura["nombreAsignatura"]
-        docente = self._obtener_docente(asignatura["docenteCedula"])
-        self.interfaz.cargar_asignatura(asignatura, docente)
+        docente = self.obtenerDocente(asignatura["docenteCedula"])
+        self.interfaz.cargarAsignatura(asignatura, docente)
 
-    def _limpiar_asignatura(self) -> None:
+    def limpiarAsignatura(self) -> None:
         self.asignatura_editando = None
-        self.interfaz.limpiar_asignatura()
+        self.interfaz.limpiarAsignatura()
 
-    def _eliminar_asignatura(self) -> None:
-        nombre = self.interfaz.asignatura_seleccionada()
+    def eliminarAsignatura(self) -> None:
+        nombre = self.interfaz.asignaturaSeleccionada()
         if nombre is not None and self.interfaz.confirmar(
             "Confirmar", "¿Eliminar la asignatura seleccionada?"
         ):
@@ -306,14 +306,14 @@ class KhronoacApp(tk.Tk):
                 a for a in self.datos["asignaturas"]
                 if a["nombreAsignatura"] != nombre
             ]
-            self._invalidar_plan()
-            self.persistencia.guardar_datos(self.datos)
-            self._limpiar_asignatura()
-            self._refrescar_listas()
+            self.invalidarPlan()
+            self.persistencia.guardarDatos(self.datos)
+            self.limpiarAsignatura()
+            self.refrescarListas()
 
 
-    def _guardar_espacio(self) -> None:
-        formulario = self.interfaz.leer_formulario_espacio()
+    def guardarEspacio(self) -> None:
+        formulario = self.interfaz.leerFormularioEspacio()
         codigo     = formulario["codigoAula"].strip()
 
         try:
@@ -321,21 +321,21 @@ class KhronoacApp(tk.Tk):
             if capacidad < 1:
                 raise ValueError
         except ValueError:
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Capacidad inválida",
                 "La capacidad debe ser un entero mayor que cero.",
             )
             return
 
         if not codigo:
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Dato incompleto", "El código del espacio es obligatorio."
             )
             return
 
         tipo = formulario["tipo"]
         if tipo == "Laboratorio" and not formulario["tipoLaboratorio"].strip():
-            self.interfaz.mostrar_aviso("Dato incompleto", "Indica el tipo de laboratorio.")
+            self.interfaz.mostrarAviso("Dato incompleto", "Indica el tipo de laboratorio.")
             return
 
         datos_espacio = {
@@ -347,9 +347,9 @@ class KhronoacApp(tk.Tk):
         }
 
         try:
-            espacio_objeto = crear_espacio(datos_espacio)
+            espacio_objeto = crearEspacio(datos_espacio)
         except ValueError as error:
-            self.interfaz.mostrar_aviso("Tipo inválido", str(error))
+            self.interfaz.mostrarAviso("Tipo inválido", str(error))
             return
 
         detalle_lab = {
@@ -364,7 +364,7 @@ class KhronoacApp(tk.Tk):
         }
 
         clave_anterior = self.espacio_editando or codigo
-        existente  = self._indice_por_clave(self.datos["espacios"], "codigoAula", clave_anterior)
+        existente  = self.indicePorClave(self.datos["espacios"], "codigoAula", clave_anterior)
         duplicado  = next(
             (
                 e for e in self.datos["espacios"]
@@ -374,7 +374,7 @@ class KhronoacApp(tk.Tk):
             None,
         )
         if duplicado is not None:
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Código duplicado", "Ya existe otro espacio con ese código."
             )
             return
@@ -384,12 +384,12 @@ class KhronoacApp(tk.Tk):
         else:
             self.datos["espacios"][existente] = registro
 
-        self._invalidar_plan()
-        self.persistencia.guardar_datos(self.datos)
-        self._limpiar_espacio()
-        self._refrescar_listas()
+        self.invalidarPlan()
+        self.persistencia.guardarDatos(self.datos)
+        self.limpiarEspacio()
+        self.refrescarListas()
 
-    def _seleccionar_espacio(self, codigo: str) -> None:
+    def seleccionarEspacio(self, codigo: str) -> None:
         espacio = next(
             (item for item in self.datos["espacios"] if item["codigoAula"] == codigo),
             None,
@@ -397,354 +397,117 @@ class KhronoacApp(tk.Tk):
         if espacio is None:
             return
         self.espacio_editando = espacio["codigoAula"]
-        self.interfaz.cargar_espacio(espacio)
+        self.interfaz.cargarEspacio(espacio)
 
-    def _limpiar_espacio(self) -> None:
+    def limpiarEspacio(self) -> None:
         self.espacio_editando = None
-        self.interfaz.limpiar_espacio()
+        self.interfaz.limpiarEspacio()
 
-    def _eliminar_espacio(self) -> None:
-        codigo = self.interfaz.espacio_seleccionado()
+    def eliminarEspacio(self) -> None:
+        codigo = self.interfaz.espacioSeleccionado()
         if codigo is not None and self.interfaz.confirmar(
             "Confirmar", "¿Eliminar el espacio seleccionado?"
         ):
             self.datos["espacios"] = [
                 e for e in self.datos["espacios"] if e["codigoAula"] != codigo
             ]
-            self._invalidar_plan()
-            self.persistencia.guardar_datos(self.datos)
-            self._limpiar_espacio()
-            self._refrescar_listas()
+            self.invalidarPlan()
+            self.persistencia.guardarDatos(self.datos)
+            self.limpiarEspacio()
+            self.refrescarListas()
 
 
 
-    def _crear_docente(self, registro: dict[str, Any]) -> Docente:
-        docente = Docente(
-            registro["cedula"],
-            registro["nombres"],
-            registro["apellidos"],
-            registro["correoElectronico"],
-            registro["tituloAcademico"],
-        )
-        for dia in registro["diasDisponibles"]:
-            docente.registrarDisponibilidad(
-                FranjaHoraria(dia, time(HORA_INICIO), time(HORA_FIN))
-            )
-        return docente
-
-    def _crear_espacio(self, registro: dict[str, Any]) -> EspacioFisico:
-        return crear_espacio(registro)
-
-   
-
-    def _generar_horario(self) -> None:
+    # Coordina la solicitud de la interfaz y guarda el horario resultante.
+    def generarHorario(self) -> None:
         if not self.datos["asignaturas"]:
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Faltan asignaturas",
                 "Registra al menos una asignatura antes de generar el horario.",
             )
             return
 
         if not self.datos["espacios"] or not self.datos["docentes"]:
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Faltan recursos",
                 "Registra al menos un docente y un espacio físico.",
             )
             return
 
         try:
-            minimo = int(self.interfaz.leer_minimo_paralelo())
+            minimo = int(self.interfaz.leerMinimoParalelo())
             if minimo < 1:
                 raise ValueError
         except ValueError:
-            self.interfaz.mostrar_aviso(
+            self.interfaz.mostrarAviso(
                 "Mínimo inválido",
                 "El mínimo por paralelo debe ser un entero mayor que cero.",
             )
             return
 
-        self._invalidar_plan()
-        self.persistencia.guardar_datos(self.datos)
-        self._mostrar_plan_guardado()
-
-        docentes = {d["cedula"]: self._crear_docente(d) for d in self.datos["docentes"]}
-        espacios = {e["codigoAula"]: self._crear_espacio(e) for e in self.datos["espacios"]}
-
-        secciones: list[dict[str, Any]] = []
-        tareas:    list[dict[str, Any]] = []
-        problemas: list[str]            = []
-
-    
-        prototipo_bloque_1h = FranjaHoraria(
-            diaSemana="Lunes", horaInicio=time(0, 0), horaFin=time(1, 0)
-        )
-
-        for registro in self.datos["asignaturas"]:
-            asignatura = Asignatura(
-                registro["nombreAsignatura"],
-                registro["horasRequeridas"],
-                registro["requiereLaboratorio"],
+        try:
+            horarioResultado = self.servicioPlanificacion.generarHorarioAcademico(
+                self.datos["asignaturas"],
+                self.datos["docentes"],
+                self.datos["espacios"],
+                minimo,
+                "HOR-001",
+                "Periodo actual",
             )
-            docente = docentes.get(registro["docenteCedula"])
-            if docente is None:
-                problemas.append(
-                    f"{asignatura.nombreAsignatura}: el docente registrado ya no existe."
-                )
-                continue
-
-            
-            espacios_validos = [
-                (clave, espacio)
-                for clave, espacio in espacios.items()
-                if espacio.capacidadMaxima >= minimo
-                and espacio.esAptoParaAsignatura(asignatura)
-            ]
-
-            if not espacios_validos:
-                tipo = "laboratorio" if asignatura.requiereLaboratorio() else "aula"
-                problemas.append(
-                    f"{asignatura.nombreAsignatura}: no hay {tipo} con capacidad"
-                    f" de al menos {minimo}."
-                )
-                continue
-
-            demanda           = int(registro["demandaEstimada"])
-            capacidad_maxima  = max(espacio.capacidadMaxima for _, espacio in espacios_validos)
-            cantidad_paralelos = math.ceil(demanda / capacidad_maxima)
-            tamanos            = [demanda // cantidad_paralelos] * cantidad_paralelos
-            for indice in range(demanda % cantidad_paralelos):
-                tamanos[indice] += 1
-
-            if min(tamanos) < minimo:
-                problemas.append(
-                    f"{asignatura.nombreAsignatura}: con demanda {demanda},"
-                    f" capacidad {capacidad_maxima} y mínimo {minimo}, no se"
-                    " pueden formar paralelos válidos."
-                )
-                continue
-
-            for indice, cantidad in enumerate(tamanos, start=1):
-                nombre_p   = f"{asignatura.nombreAsignatura} {indice}"
-                paralelo_obj = Paralelo(nombre_p, capacidad_maxima, asignatura)
-
-                for est_id in range(1, cantidad + 1):
-                    alumno_temporal = Estudiante(
-                        f"EST-{asignatura.nombreAsignatura[:3]}-{indice}-{est_id:03d}",
-                        f"Estudiante {est_id}",
-                        f"Paralelo {indice}",
-                        f"estudiante{est_id}@uleam.edu.ec",
-                    )
-                    paralelo_obj.agregarEstudiante(alumno_temporal)
-
-                seccion = {
-                    "asignatura":        asignatura.nombreAsignatura,
-                    "nombreParalelo":    paralelo_obj.nombreParalelo,
-                    "numero":            indice,
-                    "demanda":           paralelo_obj.calcularDemanda(),
-                    "cupoMaximo":        paralelo_obj.cupoMaximo,
-                    "docenteCedula":     registro["docenteCedula"],
-                    "horas":             asignatura.obtenerHorasTotales(),
-                    "requiereLaboratorio": asignatura.requiereLaboratorio(),
-                }
-                secciones.append(seccion)
-
-                for numero_hora in range(1, asignatura.obtenerHorasTotales() + 1):
-                    candidatos = []
-                    for dia in DIAS:
-                        for hora in range(HORA_INICIO, HORA_FIN):
-                          
-                            franja_evaluar = prototipo_bloque_1h.clonar(
-                                nuevoDia=dia,
-                                nuevaHoraInicio=time(hora),
-                                nuevaHoraFin=time(hora + 1),
-                            )
-                            if not docente.verificarDisponibilidad(franja_evaluar):
-                                continue
-                            for codigo, espacio in espacios_validos:
-                                if espacio.capacidadMaxima >= cantidad:
-                                    candidatos.append((dia, hora, codigo))
-
-                    if not candidatos:
-                        problemas.append(
-                            f"{nombre_p}, bloque {numero_hora}: el docente no"
-                            " tiene disponibilidad en las horas laborables."
-                        )
-
-                    tareas.append({
-                        "seccion":           seccion,
-                        "numeroHora":        numero_hora,
-                        "franjasCandidatas": candidatos,
-                    })
-
-        if problemas:
-            mensaje_detalle = "\n".join(f"• {p}" for p in problemas)
-            self.interfaz.mostrar_error(
+        except DatosPlanificacionInvalidos as error:
+            mensaje_detalle = "\n".join(
+                f"• {problema}" for problema in str(error).splitlines()
+            )
+            self.interfaz.mostrarError(
                 "No se puede generar el horario",
                 f"Corrige los siguientes inconvenientes:\n\n{mensaje_detalle}",
             )
-            self.interfaz.mostrar_estado_horario(
+            self.interfaz.mostrarEstadoHorario(
                 "No se generó el horario: hay recursos o paralelos que no cumplen las restricciones."
             )
             return
-
-        tareas.sort(key=lambda tarea: len(tarea["franjasCandidatas"]))
-        resultado = self._asignar_bloques(tareas, espacios)
-
-        if resultado is None:
-            self.interfaz.mostrar_error(
+        except SinPlanificacionDisponible as error:
+            self.interfaz.mostrarError(
                 "No se encontró una planificación",
-                "No se pudieron ubicar todas las horas sin cruces. Revisa"
-                " disponibilidades, número de aulas y horas requeridas.",
+                str(error),
             )
-            self.interfaz.mostrar_estado_horario(
+            self.interfaz.mostrarEstadoHorario(
                 "No se encontró una planificación que satisfaga todas las restricciones."
             )
             return
 
-        horario = Horario("HOR-001", "Periodo actual", "Académico")
-        for sesion in resultado:
-            horario.agregarFranja(sesion["franja"])
-
-        resultado.sort(
-            key=lambda sesion: (
-                DIAS.index(sesion["dia"]),
-                sesion["inicio"],
-                sesion["asignatura"],
-                sesion["numeroParalelo"],
-            )
-        )
-
-        self.plan_actual = {
-            "paralelos":          secciones,
-            "sesiones":           [{k: v for k, v in sesion.items() if k != "franja"}
-                                   for sesion in resultado],
-            "minimoEstudiantes":  minimo,
-            "bloqueMinutos":      60,
-            "franjasSinConflicto": not self._tiene_conflicto(resultado),
-        }
+        plan = horarioResultado.aDiccionario()
+        self.plan_actual = plan
         self.datos["ultimoHorario"] = self.plan_actual
-        self.persistencia.guardar_datos(self.datos)
-        self._mostrar_plan_guardado()
-        self.interfaz.mostrar_estado_horario(
-            f"Horario generado: {len(secciones)} paralelos, {len(resultado)}"
+        self.persistencia.guardarDatos(self.datos)
+        self.mostrarPlanGuardado()
+        self.interfaz.mostrarEstadoHorario(
+            f"Horario generado: {len(plan['paralelos'])} paralelos, {len(plan['sesiones'])}"
             " bloques de clase. Demanda distribuida entre"
             f" {minimo} y la capacidad de cada aula."
         )
 
 
-    def _asignar_bloques(
-        self,
-        tareas:   list[dict[str, Any]],
-        espacios: dict[str, EspacioFisico],
-    ) -> list[dict[str, Any]] | None:
+    def mostrarPlanGuardado(self) -> None:
+        self.plan_actual = self.datos.get("ultimoHorario")
+        self.interfaz.mostrarHorario(self.plan_actual, self.datos["docentes"])
 
-        resultado:        list[dict[str, Any]]          = []
-        docente_ocupado:  set[tuple[str, str, int]]     = set()
-        paralelo_ocupado: set[tuple[str, str, int]]     = set()
-        sesiones_por_dia: dict[str, int]                = dict.fromkeys(DIAS, 0)
-        nodos             = 0
-        limite_nodos      = 250_000
-
-        prototipo_bloque = FranjaHoraria(
-            diaSemana="Lunes", horaInicio=time(0, 0), horaFin=time(1, 0)
+    # Delega la vista docente al servicio sin reconstruir el DTO en el controlador.
+    def construirHorarioDocente(self, cedulaDocente: str) -> dict[str, Any] | None:
+        if not self.plan_actual:
+            return None
+        return self.servicioPlanificacion.construirHorarioDocente(
+            self.plan_actual, cedulaDocente
         )
 
-        def buscar(indice: int) -> bool:
-            nonlocal nodos
-            nodos += 1
-            if nodos > limite_nodos:
-                return False
-            if indice == len(tareas):
-                return True
-
-            tarea   = tareas[indice]
-            seccion = tarea["seccion"]
-
-            franjas_ordenadas = sorted(
-                tarea["franjasCandidatas"],
-                key=lambda candidata: (
-                    sesiones_por_dia[candidata[0]],
-                    DIAS.index(candidata[0]),
-                    candidata[1],
-                    candidata[2],
-                ),
-            )
-
-            for dia, hora, codigo in franjas_ordenadas:
-                clave_docente  = (seccion["docenteCedula"], dia, hora)
-                clave_paralelo = (seccion["nombreParalelo"], dia, hora)
-                espacio        = espacios[codigo]
-
-                if clave_docente in docente_ocupado or clave_paralelo in paralelo_ocupado:
-                    continue
-
-                franja = prototipo_bloque.clonar(
-                    nuevoDia=dia,
-                    nuevaHoraInicio=time(hora),
-                    nuevaHoraFin=time(hora + 1),
-                )
-
-                if not espacio.estaDisponible(franja):
-                    continue
-                if not espacio.reservarFranja(franja):
-                    continue
-
-                docente_ocupado.add(clave_docente)
-                paralelo_ocupado.add(clave_paralelo)
-                sesiones_por_dia[dia] += 1
-
-                resultado.append({
-                    "dia":           dia,
-                    "inicio":        f"{hora:02d}:00",
-                    "fin":           f"{hora + 1:02d}:00",
-                    "asignatura":    seccion["asignatura"],
-                    "paralelo":      seccion["nombreParalelo"],
-                    "numeroParalelo": seccion["numero"],
-                    "estudiantes":   seccion["demanda"],
-                    "docente":       seccion["docenteCedula"],
-                    "espacio":       codigo,
-                    "franja":        franja,
-                })
-
-                if buscar(indice + 1):
-                    return True
-
-               
-                resultado.pop()
-                sesiones_por_dia[dia] -= 1
-                docente_ocupado.remove(clave_docente)
-                paralelo_ocupado.remove(clave_paralelo)
-                espacio.liberarFranja(franja)
-
-            return False
-
-        return resultado if buscar(0) else None
-
-    @staticmethod
-    def _tiene_conflicto(sesiones: list[dict[str, Any]]) -> bool:
-        ocupaciones: set[tuple[str, str, str]] = set()
-        for sesion in sesiones:
-            for recurso in ("docente", "espacio", "paralelo"):
-                valor = sesion[recurso] if recurso != "paralelo" else sesion["paralelo"]
-                clave = (recurso, valor, sesion["dia"] + sesion["inicio"])
-                if clave in ocupaciones:
-                    return True
-                ocupaciones.add(clave)
-        return False
-
-
-    def _mostrar_plan_guardado(self) -> None:
-        self.plan_actual = self.datos.get("ultimoHorario")
-        self.interfaz.mostrar_horario(self.plan_actual, self.datos["docentes"])
-
-    def _exportar_horario(self) -> None:
+    def exportarHorario(self) -> None:
         if not self.plan_actual or not self.plan_actual.get("sesiones"):
-            self.interfaz.mostrar_informacion(
+            self.interfaz.mostrarInformacion(
                 "Sin horario", "Genera un horario antes de exportarlo."
             )
             return
-        archivo = self.persistencia.guardar_horario_exportado(self.plan_actual)
-        self.interfaz.mostrar_informacion(
+        archivo = self.persistencia.guardarHorarioExportado(self.plan_actual)
+        self.interfaz.mostrarInformacion(
             "Horario exportado", f"Se guardó el horario en:\n{archivo}"
         )
 

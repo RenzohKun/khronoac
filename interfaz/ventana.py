@@ -23,12 +23,14 @@ class KhronoacInterfaz:
         self.docente_dias_vars: dict[str, tk.BooleanVar] = {}
         self.plan_horario: dict[str, Any] | None = None
         self.docentes_horario: list[dict[str, Any]] = []
+        self.vistasDocentes: dict[str, str] = {}
+        self.planVistaActual: dict[str, Any] | None = None
 
     def construir(self) -> None:
-        self._configurar_estilos()
-        self._construir_interfaz()
+        self.configurarEstilos()
+        self.construirInterfaz()
 
-    def _configurar_estilos(self) -> None:
+    def configurarEstilos(self) -> None:
         estilo = ttk.Style(self.raiz)
         try:
             estilo.theme_use("clam")
@@ -167,7 +169,7 @@ class KhronoacInterfaz:
                    background=[("active", CARD)],
                    foreground=[("active", "#ffffff")])
 
-    def _construir_interfaz(self) -> None:
+    def construirInterfaz(self) -> None:
       
         encabezado = tk.Frame(self.raiz, bg="#0a1120", pady=0)
         encabezado.pack(fill="x")
@@ -215,10 +217,10 @@ class KhronoacInterfaz:
         self.tab_espacios    = ttk.Frame(self._contenedor, padding=4)
         self.tab_horario     = ttk.Frame(self._contenedor, padding=4)
 
-        self._construir_tab_docentes()
-        self._construir_tab_asignaturas()
-        self._construir_tab_espacios()
-        self._construir_tab_horario()
+        self.construirTabDocentes()
+        self.construirTabAsignaturas()
+        self.construirTabEspacios()
+        self.construirTabHorario()
 
         
         self._btn_sidebar: dict[str, tk.Button] = {}
@@ -255,12 +257,12 @@ class KhronoacInterfaz:
 
             clave = etiqueta
 
-            def _activar(f=frame, k=clave, ind=indicador,
+            def activar(f=frame, k=clave, ind=indicador,
                          li=lbl_icono, lt=lbl_texto, cb=cuerpo):
-                self._cambiar_seccion(k, f, ind, li, lt, cb)
+                self.cambiarSeccion(k, f, ind, li, lt, cb)
 
             for widget in (contenedor_btn, cuerpo, lbl_icono, lbl_texto):
-                widget.bind("<Button-1>", lambda _e, fn=_activar: fn())
+                widget.bind("<Button-1>", lambda _e, fn=activar: fn())
                 widget.config(cursor="hand2")
 
             self._btn_sidebar[clave] = (indicador, lbl_icono, lbl_texto, cuerpo, frame)
@@ -273,11 +275,11 @@ class KhronoacInterfaz:
         
         primer_clave = list(self._btn_sidebar)[0]
         primer_datos = self._btn_sidebar[primer_clave]
-        self._cambiar_seccion(primer_clave, primer_datos[4],
+        self.cambiarSeccion(primer_clave, primer_datos[4],
                               primer_datos[0], primer_datos[1],
                               primer_datos[2], primer_datos[3])
 
-    def _cambiar_seccion(self, clave_activa: str, frame: ttk.Frame,
+    def cambiarSeccion(self, clave_activa: str, frame: ttk.Frame,
                          indicador: tk.Frame, lbl_icono: tk.Label,
                          lbl_texto: tk.Label, cuerpo: tk.Frame) -> None:
         """Oculta la sección actual y muestra la seleccionada."""
@@ -306,7 +308,7 @@ class KhronoacInterfaz:
         self._frame_activo = frame
 
     @staticmethod
-    def _crear_tree(parent: ttk.Frame, columnas: tuple[tuple[str, str, int], ...]) -> ttk.Treeview:
+    def crearTree(parent: ttk.Frame, columnas: tuple[tuple[str, str, int], ...]) -> ttk.Treeview:
         contenedor = ttk.Frame(parent, style="Card.TFrame")
         contenedor.pack(fill="both", expand=True)
         nombres = tuple(columna[0] for columna in columnas)
@@ -327,7 +329,7 @@ class KhronoacInterfaz:
    
 
     @staticmethod
-    def _seccion_header(parent: tk.Widget, icono: str, titulo: str, subtitulo: str = "") -> None:
+    def seccionHeader(parent: tk.Widget, icono: str, titulo: str, subtitulo: str = "") -> None:
         """Dibuja un encabezado de sección con icono, título y línea decorativa."""
         fila = tk.Frame(parent, bg="#0f1623")
         fila.pack(fill="x", pady=(0, 2))
@@ -342,7 +344,7 @@ class KhronoacInterfaz:
         tk.Frame(parent, height=1, bg="#243047").pack(fill="x", pady=(6, 12))
 
     @staticmethod
-    def _campo(parent: tk.Widget, titulo: str, variable: tk.StringVar,
+    def campo(parent: tk.Widget, titulo: str, variable: tk.StringVar,
                fila: int, columna: int, ancho: int = 25) -> ttk.Entry:
         """Campo de texto con etiqueta flotante sobre fondo Card."""
         bloque = tk.Frame(parent, bg="#1a2233")
@@ -352,7 +354,7 @@ class KhronoacInterfaz:
         entrada.pack(fill="x")
         return entrada
 
-    def _dia_toggle(self, parent: tk.Frame, dia: str) -> tk.Button:
+    def diaToggle(self, parent: tk.Frame, dia: str) -> tk.Button:
         """Botón toggle para seleccionar un día de la semana."""
         var = tk.BooleanVar(value=True)
         self.docente_dias_vars[dia] = var
@@ -369,23 +371,23 @@ class KhronoacInterfaz:
             cursor="hand2",
         )
 
-        def _actualizar():
+        def actualizar():
             estado = var.get()
             bg, _, fg = ACTIVO if estado else INACTIVO
             btn.config(bg=bg, fg=fg, activebackground=bg, activeforeground=fg)
 
-        def _toggle():
+        def toggle():
             var.set(not var.get())
-            _actualizar()
+            actualizar()
 
-        btn.config(command=_toggle)
-        _actualizar()
+        btn.config(command=toggle)
+        actualizar()
         return btn
 
    
 
-    def _construir_tab_docentes(self) -> None:
-        self._seccion_header(
+    def construirTabDocentes(self) -> None:
+        self.seccionHeader(
             self.tab_docentes, "👤", "Gestión de Docentes",
             "Registra, edita y elimina los docentes del período académico"
         )
@@ -406,11 +408,11 @@ class KhronoacInterfaz:
         for col in range(5):
             grid.columnconfigure(col, weight=1)
 
-        self._campo(grid, "Cédula / identificador", self.doc_cedula,    0, 0)
-        self._campo(grid, "Nombres",                self.doc_nombres,   0, 1)
-        self._campo(grid, "Apellidos",              self.doc_apellidos, 0, 2)
-        self._campo(grid, "Correo electrónico",     self.doc_correo,    0, 3)
-        self._campo(grid, "Título académico",       self.doc_titulo,    0, 4)
+        self.campo(grid, "Cédula / identificador", self.doc_cedula,    0, 0)
+        self.campo(grid, "Nombres",                self.doc_nombres,   0, 1)
+        self.campo(grid, "Apellidos",              self.doc_apellidos, 0, 2)
+        self.campo(grid, "Correo electrónico",     self.doc_correo,    0, 3)
+        self.campo(grid, "Título académico",       self.doc_titulo,    0, 4)
 
        
         fila_dias = tk.Frame(card, bg="#1a2233")
@@ -418,16 +420,16 @@ class KhronoacInterfaz:
         tk.Label(fila_dias, text="Disponibilidad semanal  (07:00 – 20:00)",
                  font=("Segoe UI", 8), bg="#1a2233", fg="#7a8faa").pack(side="left", padx=(0, 14))
         for dia in self.dias:
-            self._dia_toggle(fila_dias, dia).pack(side="left", padx=3)
+            self.diaToggle(fila_dias, dia).pack(side="left", padx=3)
 
        
         fila_btn = tk.Frame(card, bg="#1a2233")
         fila_btn.pack(fill="x", pady=(12, 0))
         tk.Frame(fila_btn, bg="#1a2233").pack(side="left", expand=True)   
         ttk.Button(fila_btn, text="  ✔  Guardar docente", style="Accent.TButton",
-                   command=self.acciones["guardar_docente"]).pack(side="left", padx=(0, 6))
+                   command=self.acciones["guardarDocente"]).pack(side="left", padx=(0, 6))
         ttk.Button(fila_btn, text="  ✕  Limpiar",
-                   command=self.acciones["limpiar_docente"]).pack(side="left")
+                   command=self.acciones["limpiarDocente"]).pack(side="left")
 
       
         fila_tabla = tk.Frame(self.tab_docentes, bg="#0f1623")
@@ -435,7 +437,7 @@ class KhronoacInterfaz:
         tk.Label(fila_tabla, text="Docentes registrados", font=("Segoe UI", 9, "bold"),
                  bg="#0f1623", fg="#c7d8f0").pack(side="left")
         ttk.Button(fila_tabla, text="  🗑  Eliminar seleccionado", style="Danger.TButton",
-                   command=self.acciones["eliminar_docente"]).pack(side="right")
+                   command=self.acciones["eliminarDocente"]).pack(side="right")
 
         columnas = (
             ("cedula",  "Identificador",   120),
@@ -444,11 +446,11 @@ class KhronoacInterfaz:
             ("titulo",  "Título",          180),
             ("dias",    "Días disponibles",250),
         )
-        self.tree_docentes = self._crear_tree(self.tab_docentes, columnas)
-        self.tree_docentes.bind("<<TreeviewSelect>>", self.__evento_seleccion_docente)
+        self.tree_docentes = self.crearTree(self.tab_docentes, columnas)
+        self.tree_docentes.bind("<<TreeviewSelect>>", self.eventoSeleccionDocente)
 
-    def _construir_tab_asignaturas(self) -> None:
-        self._seccion_header(
+    def construirTabAsignaturas(self) -> None:
+        self.seccionHeader(
             self.tab_asignaturas, "📚", "Gestión de Asignaturas",
             "Vincula asignaturas con docentes y configura su demanda"
         )
@@ -468,9 +470,9 @@ class KhronoacInterfaz:
         for col in range(4):
             grid.columnconfigure(col, weight=1)
 
-        self._campo(grid, "Nombre de la asignatura",          self.asig_nombre,  0, 0)
-        self._campo(grid, "Horas por semana",                 self.asig_horas,   0, 1)
-        self._campo(grid, "Demanda estimada de estudiantes",  self.asig_demanda, 0, 2)
+        self.campo(grid, "Nombre de la asignatura",          self.asig_nombre,  0, 0)
+        self.campo(grid, "Horas por semana",                 self.asig_horas,   0, 1)
+        self.campo(grid, "Demanda estimada de estudiantes",  self.asig_demanda, 0, 2)
 
         bloque_doc = tk.Frame(grid, bg="#1a2233")
         bloque_doc.grid(row=0, column=3, padx=(0, 0), pady=(0, 8), sticky="ew")
@@ -488,28 +490,28 @@ class KhronoacInterfaz:
                             bg="#1a2233", fg="#7a8faa", cursor="hand2")
         lab_lbl.pack(side="left")
 
-        def _toggle_lab(_=None):
+        def toggleLab(_=None):
             lab_var.set(not lab_var.get())
             lab_lbl.config(
                 text=("☑  Requiere laboratorio" if lab_var.get() else "⬜  Requiere laboratorio"),
                 fg=("#3b82f6" if lab_var.get() else "#7a8faa"),
             )
-        lab_lbl.bind("<Button-1>", _toggle_lab)
+        lab_lbl.bind("<Button-1>", toggleLab)
 
         fila_btn = tk.Frame(card, bg="#1a2233")
         fila_btn.pack(fill="x", pady=(12, 0))
         tk.Frame(fila_btn, bg="#1a2233").pack(side="left", expand=True)
         ttk.Button(fila_btn, text="  ✔  Guardar asignatura", style="Accent.TButton",
-                   command=self.acciones["guardar_asignatura"]).pack(side="left", padx=(0, 6))
+                   command=self.acciones["guardarAsignatura"]).pack(side="left", padx=(0, 6))
         ttk.Button(fila_btn, text="  ✕  Limpiar",
-                   command=self.acciones["limpiar_asignatura"]).pack(side="left")
+                   command=self.acciones["limpiarAsignatura"]).pack(side="left")
 
         fila_tabla = tk.Frame(self.tab_asignaturas, bg="#0f1623")
         fila_tabla.pack(fill="x", pady=(4, 4))
         tk.Label(fila_tabla, text="Asignaturas registradas", font=("Segoe UI", 9, "bold"),
                  bg="#0f1623", fg="#c7d8f0").pack(side="left")
         ttk.Button(fila_tabla, text="  🗑  Eliminar seleccionado", style="Danger.TButton",
-                   command=self.acciones["eliminar_asignatura"]).pack(side="right")
+                   command=self.acciones["eliminarAsignatura"]).pack(side="right")
 
         columnas = (
             ("nombre",  "Asignatura",        220),
@@ -518,11 +520,11 @@ class KhronoacInterfaz:
             ("docente", "Docente",            220),
             ("lab",     "Laboratorio",        110),
         )
-        self.tree_asignaturas = self._crear_tree(self.tab_asignaturas, columnas)
-        self.tree_asignaturas.bind("<<TreeviewSelect>>", self.__evento_seleccion_asignatura)
+        self.tree_asignaturas = self.crearTree(self.tab_asignaturas, columnas)
+        self.tree_asignaturas.bind("<<TreeviewSelect>>", self.eventoSeleccionAsignatura)
 
-    def _construir_tab_espacios(self) -> None:
-        self._seccion_header(
+    def construirTabEspacios(self) -> None:
+        self.seccionHeader(
             self.tab_espacios, "🏫", "Aulas y Laboratorios",
             "Administra los espacios físicos disponibles y su capacidad"
         )
@@ -542,8 +544,8 @@ class KhronoacInterfaz:
         for col in range(4):
             grid.columnconfigure(col, weight=1)
 
-        self._campo(grid, "Código del espacio",  self.esp_codigo,    0, 0)
-        self._campo(grid, "Capacidad máxima",    self.esp_capacidad, 0, 1)
+        self.campo(grid, "Código del espacio",  self.esp_codigo,    0, 0)
+        self.campo(grid, "Capacidad máxima",    self.esp_capacidad, 0, 1)
 
         bloque_tipo = tk.Frame(grid, bg="#1a2233")
         bloque_tipo.grid(row=0, column=2, padx=(0, 10), pady=(0, 8), sticky="ew")
@@ -552,8 +554,8 @@ class KhronoacInterfaz:
         ttk.Combobox(bloque_tipo, textvariable=self.esp_tipo,
                      values=("Aula", "Laboratorio"), state="readonly").pack(fill="x")
 
-        self._campo(grid, "Tipo de laboratorio", self.esp_tipo_lab, 0, 3)
-        self._campo(grid, "Equipos especiales",  self.esp_equipos,  1, 0)
+        self.campo(grid, "Tipo de laboratorio", self.esp_tipo_lab, 0, 3)
+        self.campo(grid, "Equipos especiales",  self.esp_equipos,  1, 0)
 
         tk.Label(grid, text="ℹ  Los campos de laboratorio solo aplican cuando el tipo es 'Laboratorio'.",
                  font=("Segoe UI", 8), bg="#1a2233", fg="#4a5568").grid(
@@ -563,16 +565,16 @@ class KhronoacInterfaz:
         fila_btn.pack(fill="x", pady=(12, 0))
         tk.Frame(fila_btn, bg="#1a2233").pack(side="left", expand=True)
         ttk.Button(fila_btn, text="  ✔  Guardar espacio", style="Accent.TButton",
-                   command=self.acciones["guardar_espacio"]).pack(side="left", padx=(0, 6))
+                   command=self.acciones["guardarEspacio"]).pack(side="left", padx=(0, 6))
         ttk.Button(fila_btn, text="  ✕  Limpiar",
-                   command=self.acciones["limpiar_espacio"]).pack(side="left")
+                   command=self.acciones["limpiarEspacio"]).pack(side="left")
 
         fila_tabla = tk.Frame(self.tab_espacios, bg="#0f1623")
         fila_tabla.pack(fill="x", pady=(4, 4))
         tk.Label(fila_tabla, text="Espacios registrados", font=("Segoe UI", 9, "bold"),
                  bg="#0f1623", fg="#c7d8f0").pack(side="left")
         ttk.Button(fila_tabla, text="  🗑  Eliminar seleccionado", style="Danger.TButton",
-                   command=self.acciones["eliminar_espacio"]).pack(side="right")
+                   command=self.acciones["eliminarEspacio"]).pack(side="right")
 
         columnas = (
             ("codigo",   "Código",              150),
@@ -580,11 +582,11 @@ class KhronoacInterfaz:
             ("capacidad","Capacidad",            110),
             ("detalle",  "Equipamiento / tipo",  360),
         )
-        self.tree_espacios = self._crear_tree(self.tab_espacios, columnas)
-        self.tree_espacios.bind("<<TreeviewSelect>>", self.__evento_seleccion_espacio)
+        self.tree_espacios = self.crearTree(self.tab_espacios, columnas)
+        self.tree_espacios.bind("<<TreeviewSelect>>", self.eventoSeleccionEspacio)
 
-    def _construir_tab_horario(self) -> None:
-        self._seccion_header(
+    def construirTabHorario(self) -> None:
+        self.seccionHeader(
             self.tab_horario, "🗓", "Planificador de Horarios",
             "Genera automáticamente el horario sin conflictos de docente, aula o paralelo"
         )
@@ -603,8 +605,8 @@ class KhronoacInterfaz:
                  font=("Segoe UI", 8), bg="#1a2233", fg="#7a8faa").pack(anchor="w")
         self.minimo_var = tk.StringVar(value="10")
         ttk.Spinbox(fila_ctrl, from_=1, to=200, textvariable=self.minimo_var, width=7).pack(side="left", padx=10)
-        ttk.Button(fila_ctrl, text="  ▶  Generar horario", style="Accent.TButton", command=self.acciones["generar_horario"]).pack(side="left", padx=8)
-        ttk.Button(fila_ctrl, text="  ↓  Exportar JSON", command=self.acciones["exportar_horario"]).pack(side="left", padx=6)
+        ttk.Button(fila_ctrl, text="  ▶  Generar horario", style="Accent.TButton", command=self.acciones["generarHorario"]).pack(side="left", padx=8)
+        ttk.Button(fila_ctrl, text="  ↓  Exportar JSON", command=self.acciones["exportarHorario"]).pack(side="left", padx=6)
         ttk.Label(fila_ctrl, text="Vista:", style="Card.TLabel").pack(side="left", padx=(18, 6))
         self.paralelo_var = tk.StringVar(value="Todos los paralelos")
         self.combo_paralelo = ttk.Combobox(
@@ -616,7 +618,7 @@ class KhronoacInterfaz:
         )
         self.combo_paralelo.pack(side="left")
         self.combo_paralelo.bind(
-            "<<ComboboxSelected>>", self.__evento_cambio_paralelo
+            "<<ComboboxSelected>>", self.eventoCambioParalelo
         )
         ttk.Label(
             self.tab_horario,
@@ -650,14 +652,14 @@ class KhronoacInterfaz:
         scroll_x.grid(row=1, column=0, sticky="ew")
         contenedor.rowconfigure(0, weight=1)
         contenedor.columnconfigure(0, weight=1)
-        self.horario_canvas.bind("<Configure>", self.__redibujar_horario)
+        self.horario_canvas.bind("<Configure>", self.redibujarHorario)
 
         self.estado_horario = tk.StringVar(value="Registra docentes, asignaturas y espacios para comenzar.")
         tk.Label(self.tab_horario, textvariable=self.estado_horario,
                  font=("Segoe UI", 8), bg="#0f1623", fg="#7a8faa",
                  wraplength=900, justify="left").pack(anchor="w", pady=(8, 0))
 
-    def leer_formulario_docente(self) -> dict[str, Any]:
+    def leerFormularioDocente(self) -> dict[str, Any]:
         return {
             "cedula": self.doc_cedula.get(),
             "nombres": self.doc_nombres.get(),
@@ -669,7 +671,7 @@ class KhronoacInterfaz:
             ],
         }
 
-    def leer_formulario_asignatura(self) -> dict[str, Any]:
+    def leerFormularioAsignatura(self) -> dict[str, Any]:
         return {
             "nombreAsignatura": self.asig_nombre.get(),
             "horasRequeridas": self.asig_horas.get(),
@@ -678,7 +680,7 @@ class KhronoacInterfaz:
             "requiereLaboratorio": self.asig_laboratorio.get(),
         }
 
-    def leer_formulario_espacio(self) -> dict[str, Any]:
+    def leerFormularioEspacio(self) -> dict[str, Any]:
         return {
             "codigoAula": self.esp_codigo.get(),
             "capacidadMaxima": self.esp_capacidad.get(),
@@ -687,24 +689,24 @@ class KhronoacInterfaz:
             "equiposEspeciales": self.esp_equipos.get(),
         }
 
-    def leer_minimo_paralelo(self) -> str:
+    def leerMinimoParalelo(self) -> str:
         return self.minimo_var.get()
 
-    def docente_seleccionado(self) -> str | None:
-        return self.__id_seleccionado(self.tree_docentes)
+    def docenteSeleccionado(self) -> str | None:
+        return self.idSeleccionado(self.tree_docentes)
 
-    def asignatura_seleccionada(self) -> str | None:
-        return self.__id_seleccionado(self.tree_asignaturas)
+    def asignaturaSeleccionada(self) -> str | None:
+        return self.idSeleccionado(self.tree_asignaturas)
 
-    def espacio_seleccionado(self) -> str | None:
-        return self.__id_seleccionado(self.tree_espacios)
+    def espacioSeleccionado(self) -> str | None:
+        return self.idSeleccionado(self.tree_espacios)
 
     @staticmethod
-    def __id_seleccionado(tabla: ttk.Treeview) -> str | None:
+    def idSeleccionado(tabla: ttk.Treeview) -> str | None:
         seleccion = tabla.selection()
         return seleccion[0] if seleccion else None
 
-    def cargar_docente(self, docente: dict[str, Any]) -> None:
+    def cargarDocente(self, docente: dict[str, Any]) -> None:
         self.doc_cedula.set(docente["cedula"])
         self.doc_nombres.set(docente["nombres"])
         self.doc_apellidos.set(docente["apellidos"])
@@ -713,23 +715,23 @@ class KhronoacInterfaz:
         for dia, variable in self.docente_dias_vars.items():
             variable.set(dia in docente["diasDisponibles"])
 
-    def cargar_asignatura(
+    def cargarAsignatura(
         self, asignatura: dict[str, Any], docente: dict[str, Any] | None
     ) -> None:
         self.asig_nombre.set(asignatura["nombreAsignatura"])
         self.asig_horas.set(str(asignatura["horasRequeridas"]))
         self.asig_demanda.set(str(asignatura["demandaEstimada"]))
         self.asig_laboratorio.set(asignatura["requiereLaboratorio"])
-        self.asig_docente.set(self.__etiqueta_docente(docente) if docente else "")
+        self.asig_docente.set(self.etiquetaDocente(docente) if docente else "")
 
-    def cargar_espacio(self, espacio: dict[str, Any]) -> None:
+    def cargarEspacio(self, espacio: dict[str, Any]) -> None:
         self.esp_codigo.set(espacio["codigoAula"])
         self.esp_capacidad.set(str(espacio["capacidadMaxima"]))
         self.esp_tipo.set(espacio["tipo"])
         self.esp_tipo_lab.set(espacio.get("tipoLaboratorio", ""))
         self.esp_equipos.set(espacio.get("equiposEspeciales", ""))
 
-    def limpiar_docente(self) -> None:
+    def limpiarDocente(self) -> None:
         for variable in (
             self.doc_cedula, self.doc_nombres, self.doc_apellidos,
             self.doc_correo, self.doc_titulo,
@@ -739,7 +741,7 @@ class KhronoacInterfaz:
             variable.set(True)
         self.tree_docentes.selection_remove(self.tree_docentes.selection())
 
-    def limpiar_asignatura(self) -> None:
+    def limpiarAsignatura(self) -> None:
         self.asig_nombre.set("")
         self.asig_horas.set("3")
         self.asig_demanda.set("30")
@@ -748,7 +750,7 @@ class KhronoacInterfaz:
         self.asig_docente.set(docentes[0] if docentes else "")
         self.tree_asignaturas.selection_remove(self.tree_asignaturas.selection())
 
-    def limpiar_espacio(self) -> None:
+    def limpiarEspacio(self) -> None:
         self.esp_codigo.set("")
         self.esp_capacidad.set("30")
         self.esp_tipo.set("Aula")
@@ -756,7 +758,7 @@ class KhronoacInterfaz:
         self.esp_equipos.set("")
         self.tree_espacios.selection_remove(self.tree_espacios.selection())
 
-    def actualizar_listas(
+    def actualizarListas(
         self,
         docentes: list[dict[str, Any]],
         asignaturas: list[dict[str, Any]],
@@ -777,7 +779,7 @@ class KhronoacInterfaz:
             )
 
         self.docente_por_etiqueta = {
-            self.__etiqueta_docente(docente): docente["cedula"] for docente in docentes
+            self.etiquetaDocente(docente): docente["cedula"] for docente in docentes
         }
         valores_docentes = list(self.docente_por_etiqueta)
         self.combo_docente.configure(values=valores_docentes)
@@ -787,7 +789,7 @@ class KhronoacInterfaz:
         docentes_por_cedula = {docente["cedula"]: docente for docente in docentes}
         for asignatura in asignaturas:
             docente = docentes_por_cedula.get(asignatura["docenteCedula"])
-            nombre_docente = self.__etiqueta_docente(docente) if docente else "Sin docente"
+            nombre_docente = self.etiquetaDocente(docente) if docente else "Sin docente"
             self.tree_asignaturas.insert(
                 "", "end", iid=asignatura["nombreAsignatura"], values=(
                     asignatura["nombreAsignatura"],
@@ -810,7 +812,7 @@ class KhronoacInterfaz:
                 )
             )
 
-    def mostrar_horario(
+    def mostrarHorario(
         self,
         plan: dict[str, Any] | None,
         docentes: list[dict[str, Any]],
@@ -821,23 +823,42 @@ class KhronoacInterfaz:
         paralelos = sorted(
             {sesion["paralelo"] for sesion in datos_plan.get("sesiones", [])}
         )
-        opciones = ("Todos los paralelos", *paralelos)
+        cedulas_docentes = {
+            sesion["docente"] for sesion in datos_plan.get("sesiones", [])
+        }
+        docentes_por_cedula = {
+            docente["cedula"]: docente for docente in docentes
+        }
+        self.vistasDocentes = {
+            f"Docente: {self.etiquetaDocente(docentes_por_cedula.get(cedula))} ({cedula})": cedula
+            for cedula in sorted(cedulas_docentes)
+        }
+        opciones = ("Todos los paralelos", *paralelos, *self.vistasDocentes)
         self.combo_paralelo.configure(values=opciones)
         if self.paralelo_var.get() not in opciones:
             self.paralelo_var.set("Todos los paralelos")
-        self.__redibujar_horario()
+        self.planVistaActual = None
+        self.eventoCambioParalelo(None)
         if not datos_plan.get("sesiones"):
             return
-        self.mostrar_estado_horario(
+        self.mostrarEstadoHorario(
             f"Horario guardado: {len(datos_plan.get('paralelos', []))} paralelos, "
             f"{len(datos_plan['sesiones'])} bloques; mínimo configurado: "
             f"{datos_plan.get('minimoEstudiantes', '—')} estudiantes."
         )
 
-    def __evento_cambio_paralelo(self, _evento: tk.Event) -> None:
-        self.__redibujar_horario()
+    def eventoCambioParalelo(self, _evento: tk.Event | None) -> None:
+        seleccion = self.paralelo_var.get()
+        cedulaDocente = self.vistasDocentes.get(seleccion)
+        if cedulaDocente is not None:
+            self.planVistaActual = self.acciones["construirHorarioDocente"](
+                cedulaDocente
+            )
+        else:
+            self.planVistaActual = None
+        self.redibujarHorario()
 
-    def __redibujar_horario(self, _evento: tk.Event | None = None) -> None:
+    def redibujarHorario(self, _evento: tk.Event | None = None) -> None:
         canvas = getattr(self, "horario_canvas", None)
         if canvas is None:
             return
@@ -848,9 +869,15 @@ class KhronoacInterfaz:
         ancho_dia = (ancho - margen * 2 - ancho_hora) / len(self.dias)
         alto_cabecera = 36
         inicio_tabla = 132
-        sesiones = (self.plan_horario or {}).get("sesiones", [])
+        seleccion = self.paralelo_var.get()
+        planVista = (
+            self.planVistaActual
+            if seleccion in self.vistasDocentes
+            else self.plan_horario
+        )
+        sesiones = (planVista or {}).get("sesiones", [])
         paralelo = self.paralelo_var.get()
-        if paralelo != "Todos los paralelos":
+        if paralelo != "Todos los paralelos" and paralelo not in self.vistasDocentes:
             sesiones = [sesion for sesion in sesiones if sesion["paralelo"] == paralelo]
 
         sesiones_por_celda: dict[tuple[int, str], list[dict[str, Any]]] = {}
@@ -991,19 +1018,19 @@ class KhronoacInterfaz:
                 fill="#343434", width=1,
             )
 
-    def mostrar_estado_horario(self, texto: str) -> None:
+    def mostrarEstadoHorario(self, texto: str) -> None:
         self.estado_horario.set(texto)
 
     @staticmethod
-    def mostrar_aviso(titulo: str, texto: str) -> None:
+    def mostrarAviso(titulo: str, texto: str) -> None:
         messagebox.showwarning(titulo, texto)
 
     @staticmethod
-    def mostrar_error(titulo: str, texto: str) -> None:
+    def mostrarError(titulo: str, texto: str) -> None:
         messagebox.showerror(titulo, texto)
 
     @staticmethod
-    def mostrar_informacion(titulo: str, texto: str) -> None:
+    def mostrarInformacion(titulo: str, texto: str) -> None:
         messagebox.showinfo(titulo, texto)
 
     @staticmethod
@@ -1011,22 +1038,22 @@ class KhronoacInterfaz:
         return messagebox.askyesno(titulo, texto)
 
     @staticmethod
-    def __etiqueta_docente(docente: dict[str, Any] | None) -> str:
+    def etiquetaDocente(docente: dict[str, Any] | None) -> str:
         if docente is None:
             return ""
         return f"{docente['cedula']} — {docente['nombres']} {docente['apellidos']}"
 
-    def __evento_seleccion_docente(self, _evento: tk.Event) -> None:
-        seleccionado = self.docente_seleccionado()
+    def eventoSeleccionDocente(self, _evento: tk.Event) -> None:
+        seleccionado = self.docenteSeleccionado()
         if seleccionado is not None:
-            self.acciones["seleccionar_docente"](seleccionado)
+            self.acciones["seleccionarDocente"](seleccionado)
 
-    def __evento_seleccion_asignatura(self, _evento: tk.Event) -> None:
-        seleccionado = self.asignatura_seleccionada()
+    def eventoSeleccionAsignatura(self, _evento: tk.Event) -> None:
+        seleccionado = self.asignaturaSeleccionada()
         if seleccionado is not None:
-            self.acciones["seleccionar_asignatura"](seleccionado)
+            self.acciones["seleccionarAsignatura"](seleccionado)
 
-    def __evento_seleccion_espacio(self, _evento: tk.Event) -> None:
-        seleccionado = self.espacio_seleccionado()
+    def eventoSeleccionEspacio(self, _evento: tk.Event) -> None:
+        seleccionado = self.espacioSeleccionado()
         if seleccionado is not None:
-            self.acciones["seleccionar_espacio"](seleccionado)
+            self.acciones["seleccionarEspacio"](seleccionado)

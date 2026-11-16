@@ -12,10 +12,10 @@ class EspacioFisico:
         self.__codigoAula = codigoAula
         self.__capacidadMaxima = capacidadMaxima
         self.__franjasOcupadas: List[FranjaHoraria] = []
-        self.__validarCapacidad(capacidadMaxima)
+        self.validarCapacidad(capacidadMaxima)
 
     @staticmethod
-    def __validarCapacidad(valor: int) -> None:
+    def validarCapacidad(valor: int) -> None:
         if valor < 0:
             raise ValueError("La capacidad máxima no puede ser negativa.")
 
@@ -33,7 +33,7 @@ class EspacioFisico:
 
     @capacidadMaxima.setter
     def capacidadMaxima(self, valor: int) -> None:
-        self.__validarCapacidad(valor)
+        self.validarCapacidad(valor)
         self.__capacidadMaxima = valor
 
     @property

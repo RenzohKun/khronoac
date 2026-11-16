@@ -1,3 +1,3 @@
-from .creadores import crear_espacio
+from .creadores import crearEspacio
 
-__all__ = ["crear_espacio"]
+__all__ = ["crearEspacio"]

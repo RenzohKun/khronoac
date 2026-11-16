@@ -19,23 +19,23 @@ class KhronoacPersistenciaDatos:
         self.__directorio_datos = Path(directorio_datos)
         self._inicializado = True
 
-    def cargar_datos(self) -> dict[str, Any]:
+    def cargarDatos(self) -> dict[str, Any]:
         self.__directorio_datos.mkdir(parents=True, exist_ok=True)
         return {
-            "docentes": self.__leer_seccion("docentes", []),
-            "asignaturas": self.__leer_seccion("asignaturas", []),
-            "espacios": self.__leer_seccion("espacios", []),
-            "ultimoHorario": self.__leer_seccion("horario", None),
+            "docentes": self.leerSeccion("docentes", []),
+            "asignaturas": self.leerSeccion("asignaturas", []),
+            "espacios": self.leerSeccion("espacios", []),
+            "ultimoHorario": self.leerSeccion("horario", None),
         }
 
-    def guardar_datos(self, datos: Mapping[str, Any]) -> None:
+    def guardarDatos(self, datos: Mapping[str, Any]) -> None:
         # Guarda las secciones principales en sus archivos JSON.
-        self.__guardar_seccion("docentes", datos["docentes"])
-        self.__guardar_seccion("asignaturas", datos["asignaturas"])
-        self.__guardar_seccion("espacios", datos["espacios"])
-        self.__guardar_seccion("horario", datos["ultimoHorario"])
+        self.guardarSeccion("docentes", datos["docentes"])
+        self.guardarSeccion("asignaturas", datos["asignaturas"])
+        self.guardarSeccion("espacios", datos["espacios"])
+        self.guardarSeccion("horario", datos["ultimoHorario"])
 
-    def guardar_horario_exportado(
+    def guardarHorarioExportado(
         self,
         horario: Mapping[str, Any],
         nombre_archivo: str = "horario_exportado.json",
@@ -46,7 +46,7 @@ class KhronoacPersistenciaDatos:
             json.dump(horario, salida, ensure_ascii=False, indent=2)
         return archivo
 
-    def __leer_seccion(self, nombre: str, por_defecto: Any) -> Any:
+    def leerSeccion(self, nombre: str, por_defecto: Any) -> Any:
         archivo = self.__directorio_datos / f"{nombre}.json"
         if not archivo.exists():
             return por_defecto
@@ -56,7 +56,7 @@ class KhronoacPersistenciaDatos:
         except (OSError, json.JSONDecodeError):
             return por_defecto
 
-    def __guardar_seccion(self, nombre: str, contenido: Any) -> None:
+    def guardarSeccion(self, nombre: str, contenido: Any) -> None:
         self.__directorio_datos.mkdir(parents=True, exist_ok=True)
         archivo = self.__directorio_datos / f"{nombre}.json"
         temporal = self.__directorio_datos / f"{nombre}.tmp"

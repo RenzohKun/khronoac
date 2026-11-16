@@ -7,20 +7,20 @@ from modelos.Laboratorio import Laboratorio
 
 class CreadorEspacio(ABC):
     def crear(self, datos: Mapping[str, Any]) -> EspacioFisico:
-        return self.factory_method(datos)
+        return self.factoryMethod(datos)
 
     @abstractmethod
-    def factory_method(self, datos: Mapping[str, Any]) -> EspacioFisico:
+    def factoryMethod(self, datos: Mapping[str, Any]) -> EspacioFisico:
         """Construye el tipo concreto de espacio."""
 
 
 class CreadorAula(CreadorEspacio):
-    def factory_method(self, datos: Mapping[str, Any]) -> EspacioFisico:
+    def factoryMethod(self, datos: Mapping[str, Any]) -> EspacioFisico:
         return EspacioFisico(datos["codigoAula"], int(datos["capacidadMaxima"]))
 
 
 class CreadorLaboratorio(CreadorEspacio):
-    def factory_method(self, datos: Mapping[str, Any]) -> EspacioFisico:
+    def factoryMethod(self, datos: Mapping[str, Any]) -> EspacioFisico:
         return Laboratorio(
             datos["codigoAula"],
             int(datos["capacidadMaxima"]),
@@ -35,7 +35,7 @@ CREADORES_ESPACIO: dict[str, CreadorEspacio] = {
 }
 
 
-def crear_espacio(datos: Mapping[str, Any]) -> EspacioFisico:
+def crearEspacio(datos: Mapping[str, Any]) -> EspacioFisico:
     tipo = datos.get("tipo", "Aula")
     try:
         creador = CREADORES_ESPACIO[tipo]

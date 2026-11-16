@@ -9,7 +9,7 @@ class FranjaHoraria(IFranjaHoraria):
         self.__diaSemana = diaSemana
         self.__horaInicio = horaInicio
         self.__horaFin = horaFin
-        self.__validarHoras()
+        self.validarHoras()
 
     @property
     def diaSemana(self) -> str:
@@ -28,7 +28,7 @@ class FranjaHoraria(IFranjaHoraria):
         anterior = self.__horaInicio
         self.__horaInicio = valor
         try:
-            self.__validarHoras()
+            self.validarHoras()
         except (TypeError, ValueError):
             self.__horaInicio = anterior
             raise
@@ -42,12 +42,12 @@ class FranjaHoraria(IFranjaHoraria):
         anterior = self.__horaFin
         self.__horaFin = valor
         try:
-            self.__validarHoras()
+            self.validarHoras()
         except (TypeError, ValueError):
             self.__horaFin = anterior
             raise
 
-    def __validarHoras(self) -> None:
+    def validarHoras(self) -> None:
         if not isinstance(self.__horaInicio, time) or not isinstance(self.__horaFin, time):
             raise TypeError("Las horas deben ser objetos datetime.time.")
         if self.__horaInicio >= self.__horaFin:
@@ -76,6 +76,6 @@ class FranjaHoraria(IFranjaHoraria):
         if nuevaHoraFin is not None:
             clon._FranjaHoraria__horaFin = nuevaHoraFin
 
-        clon.__validarHoras()
+        clon.validarHoras()
 
         return clon
