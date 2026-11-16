@@ -1,3 +1,11 @@
+# Este archivo es el adaptador de entrada del flujo de planificación de horarios.
+# Recibe registros en el formato externo de formularios o JSON y los transforma a
+# una estructura que el planificador entiende.
+#
+# Cumple una función parecida al patrón de diseño estructural Adapter, pero no es
+# en precisión un Adapter clásico basado en objetos, sino que es un módulo con
+# funciones de conversión.
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,6 +22,7 @@ from .ErroresPlanificacion import DatosPlanificacionInvalidos
 
 @dataclass(frozen=True)
 class AsignaturaPlanificacion:
+
     # Datos de asignatura que el algoritmo necesita para planificar.
 
     asignatura: Asignatura
@@ -23,6 +32,7 @@ class AsignaturaPlanificacion:
 
 @dataclass(frozen=True)
 class DatosPlanificacion:
+
     # Entrada normalizada que separa el algoritmo del formato de formularios y JSON.
 
     asignaturas: list[AsignaturaPlanificacion]
@@ -37,7 +47,9 @@ def adaptarDatosPlanificacion(
     horaInicio: int,
     horaFin: int,
 ) -> DatosPlanificacion:
+
     # Convierte registros externos a entidades y datos usados por planificación.
+
     try:
         docentes = {
             registro["cedula"]: crearDocente(registro, horaInicio, horaFin)
@@ -69,7 +81,9 @@ def adaptarDatosPlanificacion(
 def crearDocente(
     registro: dict[str, Any], horaInicio: int, horaFin: int
 ) -> Docente:
+
     # Crea el docente de dominio y sus franjas disponibles.
+
     docente = Docente(
         registro["cedula"],
         registro["nombres"],

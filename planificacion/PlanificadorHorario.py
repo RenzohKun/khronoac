@@ -226,6 +226,7 @@ class PlanificadorHorario:
         return resultado if buscar(0) else None
 
     def tieneConflicto(self, sesiones: list[dict[str, Any]]) -> bool:
+
         # Verifica que una sesión no repita recurso, día y hora.
         ocupaciones: set[tuple[str, str, str]] = set()
         for sesion in sesiones:

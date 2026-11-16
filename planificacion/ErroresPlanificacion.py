@@ -1,3 +1,6 @@
+# Este archivo se encarga de definir dos errores que permiten distinguir entre
+# datos o condiciones inválidas y falta de una planificación disponible.
+#
 # Estas clases son excepciones propias de la planificación, sirven para que
 # la aplicación distinga dos tipos de problema.
 
