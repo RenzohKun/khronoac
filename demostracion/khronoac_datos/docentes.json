@@ -1,0 +1,72 @@
+[
+  {
+    "cedula": "0990000001",
+    "nombres": "Elena",
+    "apellidos": "Torres",
+    "correoElectronico": "elena@demo.khronoac.test",
+    "tituloAcademico": "Ingeniera en Sistemas",
+    "diasDisponibles": [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes"
+    ]
+  },
+  {
+    "cedula": "0990000002",
+    "nombres": "Mateo",
+    "apellidos": "Vargas",
+    "correoElectronico": "mateo@demo.khronoac.test",
+    "tituloAcademico": "Magíster en Software",
+    "diasDisponibles": [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes"
+    ]
+  },
+  {
+    "cedula": "0990000003",
+    "nombres": "Lucía",
+    "apellidos": "Mendoza",
+    "correoElectronico": "lucía@demo.khronoac.test",
+    "tituloAcademico": "Ingeniera en Redes",
+    "diasDisponibles": [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes"
+    ]
+  },
+  {
+    "cedula": "0990000004",
+    "nombres": "Andrés",
+    "apellidos": "Cedeño",
+    "correoElectronico": "andrés@demo.khronoac.test",
+    "tituloAcademico": "Matemático",
+    "diasDisponibles": [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes"
+    ]
+  },
+  {
+    "cedula": "0990000005",
+    "nombres": "Valeria",
+    "apellidos": "Ponce",
+    "correoElectronico": "valeria@demo.khronoac.test",
+    "tituloAcademico": "Magíster en Computación",
+    "diasDisponibles": [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes"
+    ]
+  }
+]

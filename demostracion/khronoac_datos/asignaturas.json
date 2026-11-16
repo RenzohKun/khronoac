@@ -1,0 +1,51 @@
+[
+  {
+    "nombreAsignatura": "Programación Orientada a Objetos",
+    "horasRequeridas": 3,
+    "requiereLaboratorio": true,
+    "demandaEstimada": 56,
+    "docenteCedula": "0990000001"
+  },
+  {
+    "nombreAsignatura": "Estructuras de Datos",
+    "horasRequeridas": 3,
+    "requiereLaboratorio": true,
+    "demandaEstimada": 56,
+    "docenteCedula": "0990000002"
+  },
+  {
+    "nombreAsignatura": "Bases de Datos",
+    "horasRequeridas": 3,
+    "requiereLaboratorio": true,
+    "demandaEstimada": 56,
+    "docenteCedula": "0990000003"
+  },
+  {
+    "nombreAsignatura": "Matemática Discreta",
+    "horasRequeridas": 3,
+    "requiereLaboratorio": false,
+    "demandaEstimada": 56,
+    "docenteCedula": "0990000004"
+  },
+  {
+    "nombreAsignatura": "Sistemas Operativos",
+    "horasRequeridas": 3,
+    "requiereLaboratorio": true,
+    "demandaEstimada": 56,
+    "docenteCedula": "0990000005"
+  },
+  {
+    "nombreAsignatura": "Redes de Computadores",
+    "horasRequeridas": 3,
+    "requiereLaboratorio": true,
+    "demandaEstimada": 56,
+    "docenteCedula": "0990000001"
+  },
+  {
+    "nombreAsignatura": "Ingeniería de Software",
+    "horasRequeridas": 3,
+    "requiereLaboratorio": false,
+    "demandaEstimada": 56,
+    "docenteCedula": "0990000002"
+  }
+]

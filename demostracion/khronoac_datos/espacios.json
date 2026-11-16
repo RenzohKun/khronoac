@@ -1,0 +1,30 @@
+[
+  {
+    "codigoAula": "Aula-101",
+    "capacidadMaxima": 35,
+    "tipo": "Aula",
+    "tipoLaboratorio": "",
+    "equiposEspeciales": ""
+  },
+  {
+    "codigoAula": "Aula-102",
+    "capacidadMaxima": 35,
+    "tipo": "Aula",
+    "tipoLaboratorio": "",
+    "equiposEspeciales": ""
+  },
+  {
+    "codigoAula": "Lab-201",
+    "capacidadMaxima": 30,
+    "tipo": "Laboratorio",
+    "tipoLaboratorio": "Computación",
+    "equiposEspeciales": "Computadoras, proyector"
+  },
+  {
+    "codigoAula": "Lab-202",
+    "capacidadMaxima": 30,
+    "tipo": "Laboratorio",
+    "tipoLaboratorio": "Computación",
+    "equiposEspeciales": "Computadoras, proyector"
+  }
+]
