@@ -3,6 +3,7 @@ import tkinter as tk
 from pathlib import Path
 from typing import Any
 from modelos.Asignatura    import Asignatura
+from gestion import GestorDocentes
 from persistencia      import KhronoacPersistenciaDatos
 from interfaz          import KhronoacInterfaz
 from fabrica_espacios  import crearEspacio
@@ -49,22 +50,28 @@ class KhronoacApp(tk.Tk):
         )
         self.datos                             = self.persistencia.cargarDatos()
         self.plan_actual: dict[str, Any] | None = self.datos["ultimoHorario"]
-        self.docente_editando:   str | None    = None
         self.asignatura_editando: str | None   = None
         self.espacio_editando:   str | None    = None
 
-      
-        self.interfaz = KhronoacInterfaz(self, self.crearAccionesInterfaz(), DIAS)
+        self.interfaz = KhronoacInterfaz(self, {}, DIAS)
+        self.gestorDocentes = GestorDocentes(
+            self.datos,
+            self.persistencia,
+            self.interfaz,
+            self.invalidarPlan,
+            self.refrescarListas,
+        )
+        self.interfaz.acciones.update(self.crearAccionesInterfaz())
         self.interfaz.construir()
         self.refrescarListas()
 
     def crearAccionesInterfaz(self) -> dict[str, Any]:
         """Mapa de callbacks que la interfaz puede invocar."""
         return {
-            "guardarDocente":      self.guardarDocente,
-            "limpiarDocente":      self.limpiarDocente,
-            "eliminarDocente":     self.eliminarDocente,
-            "seleccionarDocente":  self.seleccionarDocente,
+            "guardarDocente":      self.gestorDocentes.guardarDesdeInterfaz,
+            "limpiarDocente":      self.gestorDocentes.limpiarDesdeInterfaz,
+            "eliminarDocente":     self.gestorDocentes.eliminarDesdeInterfaz,
+            "seleccionarDocente":  self.gestorDocentes.seleccionarDesdeInterfaz,
             "guardarAsignatura":   self.guardarAsignatura,
             "limpiarAsignatura":   self.limpiarAsignatura,
             "eliminarAsignatura":  self.eliminarAsignatura,
@@ -93,12 +100,6 @@ class KhronoacApp(tk.Tk):
             None,
         )
 
-    def obtenerDocente(self, cedula: str) -> dict[str, Any] | None:
-        return next(
-            (persona for persona in self.datos["docentes"] if persona["cedula"] == cedula),
-            None,
-        )
-
     def refrescarListas(self) -> None:
         self.interfaz.actualizarListas(
             self.datos["docentes"],
@@ -106,119 +107,6 @@ class KhronoacApp(tk.Tk):
             self.datos["espacios"],
         )
         self.mostrarPlanGuardado()
-
-   
-
-    def guardarDocente(self) -> None:
-        formulario = self.interfaz.leerFormularioDocente()
-        cedula    = formulario["cedula"].strip()
-        nombres   = formulario["nombres"].strip()
-        apellidos = formulario["apellidos"].strip()
-
-        if not all((cedula, nombres, apellidos)):
-            self.interfaz.mostrarAviso(
-                "Datos incompletos",
-                "Cédula, nombres y apellidos son obligatorios.",
-            )
-            return
-
-        dias = formulario["diasDisponibles"]
-        if not dias:
-            self.interfaz.mostrarAviso(
-                "Disponibilidad requerida",
-                "Selecciona al menos un día disponible.",
-            )
-            return
-
-        clave_anterior = self.docente_editando
-        indice_nuevo   = self.indicePorClave(self.datos["docentes"], "cedula", cedula)
-
-       
-        if clave_anterior is None and indice_nuevo is not None:
-            self.interfaz.mostrarAviso(
-                "Identificador duplicado",
-                "Ya existe otro docente con esa cédula.",
-            )
-            return
-
-        docente = {
-            "cedula":            cedula,
-            "nombres":           nombres,
-            "apellidos":         apellidos,
-            "correoElectronico": formulario["correoElectronico"].strip(),
-            "tituloAcademico":   formulario["tituloAcademico"].strip(),
-            "diasDisponibles":   dias,
-        }
-
-        if clave_anterior is None:
-            self.datos["docentes"].append(docente)
-
-        else:
-            indice_anterior = self.indicePorClave(
-                self.datos["docentes"], "cedula", clave_anterior
-            )
-
-            if indice_anterior is None:
-                self.interfaz.mostrarError(
-                    "Error",
-                    "No se encontró el docente que intentas editar.",
-                )
-                return
-
-          
-            if indice_nuevo is not None and cedula != clave_anterior:
-                self.interfaz.mostrarAviso(
-                    "Identificador duplicado",
-                    "Esa cédula ya pertenece a otro docente.",
-                )
-                return
-
-            self.datos["docentes"][indice_anterior] = docente
-
-           
-            if cedula != clave_anterior:
-                for asignatura in self.datos["asignaturas"]:
-                    if asignatura["docenteCedula"] == clave_anterior:
-                        asignatura["docenteCedula"] = cedula
-
-        self.invalidarPlan()
-        self.persistencia.guardarDatos(self.datos)
-        self.limpiarDocente()
-        self.refrescarListas()
-        self.interfaz.mostrarInformacion("Éxito", "Docente guardado correctamente.")
-
-    def seleccionarDocente(self, cedula: str) -> None:
-        docente = self.obtenerDocente(cedula)
-        if docente is None:
-            return
-        self.docente_editando = docente["cedula"]
-        self.interfaz.cargarDocente(docente)
-
-    def limpiarDocente(self) -> None:
-        self.docente_editando = None
-        self.interfaz.limpiarDocente()
-
-    def eliminarDocente(self) -> None:
-        cedula = self.interfaz.docenteSeleccionado()
-        if cedula is None:
-            return
-
-        if any(asig["docenteCedula"] == cedula for asig in self.datos["asignaturas"]):
-            self.interfaz.mostrarAviso(
-                "Docente asignado",
-                "Reasigna o elimina las asignaturas de este docente antes de eliminarlo.",
-            )
-            return
-
-        if self.interfaz.confirmar("Confirmar", "¿Eliminar el docente seleccionado?"):
-            self.datos["docentes"] = [
-                d for d in self.datos["docentes"] if d["cedula"] != cedula
-            ]
-            self.invalidarPlan()
-            self.persistencia.guardarDatos(self.datos)
-            self.limpiarDocente()
-            self.refrescarListas()
-
 
     def guardarAsignatura(self) -> None:
         formulario = self.interfaz.leerFormularioAsignatura()
@@ -290,7 +178,7 @@ class KhronoacApp(tk.Tk):
         if asignatura is None:
             return
         self.asignatura_editando = asignatura["nombreAsignatura"]
-        docente = self.obtenerDocente(asignatura["docenteCedula"])
+        docente = self.gestorDocentes.obtener(asignatura["docenteCedula"])
         self.interfaz.cargarAsignatura(asignatura, docente)
 
     def limpiarAsignatura(self) -> None:
