@@ -31,6 +31,13 @@ class KhronoacInterfaz:
         self.docentes_horario: list[dict[str, Any]] = []
         self.vistasDocentes: dict[str, str] = {}
         self.planVistaActual: dict[str, Any] | None = None
+        self.asignaturas_estudiantes: list[dict[str, Any]] = []
+        self.docentes_estudiantes: list[dict[str, Any]] = []
+        self.ventana_estudiantes: tk.Toplevel | None = None
+        self.combo_estudiantes_materia: ttk.Combobox | None = None
+        self.combo_estudiantes_docente: ttk.Combobox | None = None
+        self.tabla_estudiantes_curso: ttk.Treeview | None = None
+        self.estado_estudiantes: tk.StringVar | None = None
 
     def construir(self) -> None:
         self.configurarEstilos()
@@ -558,6 +565,11 @@ class KhronoacInterfaz:
                  bg="#0f1623", fg="#c7d8f0").pack(side="left")
         ttk.Button(fila_tabla, text="  🗑  Eliminar seleccionado", style="Danger.TButton",
                    command=self.acciones["eliminarAsignatura"]).pack(side="right")
+        ttk.Button(
+            fila_tabla,
+            text="  👥  Ver estudiantes",
+            command=self.abrirVentanaEstudiantes,
+        ).pack(side="right", padx=(0, 6))
 
         columnas = (
             ("nombre",  "Asignatura",        220),
@@ -810,6 +822,9 @@ class KhronoacInterfaz:
         asignaturas: list[dict[str, Any]],
         espacios: list[dict[str, Any]],
     ) -> None:
+        self.docentes_estudiantes = docentes
+        self.asignaturas_estudiantes = asignaturas
+
         for tabla in (self.tree_docentes, self.tree_asignaturas, self.tree_espacios):
             tabla.delete(*tabla.get_children())
 
@@ -857,6 +872,200 @@ class KhronoacInterfaz:
                     espacio["capacidadMaxima"], detalle,
                 )
             )
+        self.actualizarVentanaEstudiantes()
+
+    def abrirVentanaEstudiantes(self) -> None:
+        if (
+            self.ventana_estudiantes is not None
+            and self.ventana_estudiantes.winfo_exists()
+        ):
+            self.ventana_estudiantes.lift()
+            self.actualizarVentanaEstudiantes()
+            return
+
+        ventana = tk.Toplevel(self.raiz)
+        self.ventana_estudiantes = ventana
+        ventana.title("Estudiantes por materia y docente")
+        ventana.geometry("760x420")
+        ventana.minsize(620, 340)
+        ventana.configure(bg="#0f1623")
+        ventana.transient(self.raiz)
+
+        contenido = tk.Frame(ventana, bg="#0f1623", padx=24, pady=20)
+        contenido.pack(fill="both", expand=True)
+        self.seccionHeader(
+            contenido,
+            "👥",
+            "Estudiantes del curso",
+            "Consulta la cantidad estimada según la materia y su docente",
+        )
+
+        filtros = tk.Frame(contenido, bg="#1a2233", padx=16, pady=14)
+        filtros.pack(fill="x", pady=(8, 12))
+        filtros.columnconfigure(0, weight=1)
+        filtros.columnconfigure(1, weight=1)
+
+        bloque_materia = tk.Frame(filtros, bg="#1a2233")
+        bloque_materia.grid(row=0, column=0, padx=(0, 10), sticky="ew")
+        tk.Label(
+            bloque_materia,
+            text="Materia",
+            font=("Segoe UI", 8),
+            bg="#1a2233",
+            fg="#7a8faa",
+        ).pack(anchor="w", pady=(0, 2))
+        self.combo_estudiantes_materia = ttk.Combobox(
+            bloque_materia, state="readonly"
+        )
+        self.combo_estudiantes_materia.pack(fill="x")
+        self.combo_estudiantes_materia.bind(
+            "<<ComboboxSelected>>", self.mostrarEstudiantesCurso
+        )
+
+        bloque_docente = tk.Frame(filtros, bg="#1a2233")
+        bloque_docente.grid(row=0, column=1, sticky="ew")
+        tk.Label(
+            bloque_docente,
+            text="Docente",
+            font=("Segoe UI", 8),
+            bg="#1a2233",
+            fg="#7a8faa",
+        ).pack(anchor="w", pady=(0, 2))
+        self.combo_estudiantes_docente = ttk.Combobox(
+            bloque_docente, state="readonly"
+        )
+        self.combo_estudiantes_docente.pack(fill="x")
+        self.combo_estudiantes_docente.bind(
+            "<<ComboboxSelected>>", self.mostrarEstudiantesCurso
+        )
+
+        self.estado_estudiantes = tk.StringVar()
+        tk.Label(
+            contenido,
+            textvariable=self.estado_estudiantes,
+            font=("Segoe UI", 9, "bold"),
+            bg="#0f1623",
+            fg="#c7d8f0",
+            anchor="w",
+        ).pack(fill="x", pady=(2, 8))
+
+        columnas = (
+            ("materia", "Materia", 280),
+            ("docente", "Docente", 240),
+            ("cantidad", "Estudiantes estimados", 170),
+        )
+        self.tabla_estudiantes_curso = self.crearTree(contenido, columnas)
+        ventana.protocol("WM_DELETE_WINDOW", ventana.destroy)
+        self.actualizarVentanaEstudiantes()
+
+    def actualizarVentanaEstudiantes(self) -> None:
+        if (
+            self.ventana_estudiantes is None
+            or not self.ventana_estudiantes.winfo_exists()
+            or self.combo_estudiantes_materia is None
+            or self.combo_estudiantes_docente is None
+        ):
+            return
+
+        indice_materia = self.combo_estudiantes_materia.current()
+        indice_docente = self.combo_estudiantes_docente.current()
+        nombres_materias = [
+            str(asignatura["nombreAsignatura"])
+            for asignatura in self.asignaturas_estudiantes
+        ]
+        nombres_docentes = [
+            self.etiquetaDocente(docente)
+            for docente in self.docentes_estudiantes
+        ]
+        self.combo_estudiantes_materia.configure(values=nombres_materias)
+        self.combo_estudiantes_docente.configure(values=nombres_docentes)
+
+        if nombres_materias:
+            if not 0 <= indice_materia < len(nombres_materias):
+                indice_materia = 0
+            self.combo_estudiantes_materia.current(indice_materia)
+        else:
+            self.combo_estudiantes_materia.set("")
+
+        if nombres_docentes:
+            if 0 <= indice_docente < len(nombres_docentes):
+                self.combo_estudiantes_docente.current(indice_docente)
+            elif nombres_materias:
+                cedula_docente = self.asignaturas_estudiantes[
+                    indice_materia
+                ]["docenteCedula"]
+                indice_docente = next(
+                    (
+                        indice
+                        for indice, docente in enumerate(self.docentes_estudiantes)
+                        if docente["cedula"] == cedula_docente
+                    ),
+                    0,
+                )
+                self.combo_estudiantes_docente.current(indice_docente)
+            else:
+                self.combo_estudiantes_docente.current(0)
+        else:
+            self.combo_estudiantes_docente.set("")
+
+        self.mostrarEstudiantesCurso()
+
+    def mostrarEstudiantesCurso(self, evento: tk.Event | None = None) -> None:
+        if evento is not None and evento.widget not in (
+            self.combo_estudiantes_materia,
+            self.combo_estudiantes_docente,
+        ):
+            return
+
+        if (
+            self.combo_estudiantes_materia is None
+            or self.combo_estudiantes_docente is None
+            or self.tabla_estudiantes_curso is None
+            or self.estado_estudiantes is None
+        ):
+            return
+
+        self.tabla_estudiantes_curso.delete(
+            *self.tabla_estudiantes_curso.get_children()
+        )
+        indice_materia = self.combo_estudiantes_materia.current()
+        indice_docente = self.combo_estudiantes_docente.current()
+        if (
+            indice_materia < 0
+            or indice_materia >= len(self.asignaturas_estudiantes)
+            or indice_docente < 0
+            or indice_docente >= len(self.docentes_estudiantes)
+        ):
+            self.estado_estudiantes.set(
+                "Registra una materia y un docente para consultar el curso."
+            )
+            return
+
+        asignatura = self.asignaturas_estudiantes[indice_materia]
+        docente = self.docentes_estudiantes[indice_docente]
+        if asignatura["docenteCedula"] != docente["cedula"]:
+            self.estado_estudiantes.set(
+                "El docente seleccionado no está asignado a esta materia."
+            )
+            return
+
+        demanda = asignatura.get("demandaEstimada")
+        if isinstance(demanda, bool) or not isinstance(demanda, int) or demanda < 0:
+            self.estado_estudiantes.set(
+                "La materia no tiene una cantidad estimada de estudiantes válida."
+            )
+            return
+
+        self.estado_estudiantes.set(f"Total estimado de estudiantes: {demanda}")
+        self.tabla_estudiantes_curso.insert(
+            "",
+            "end",
+            values=(
+                asignatura["nombreAsignatura"],
+                f"{docente['nombres']} {docente['apellidos']}",
+                demanda,
+            ),
+        )
 
     def mostrarHorario(
         self,
