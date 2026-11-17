@@ -1,10 +1,10 @@
 [
   {
-    "cedula": "1316556354",
-    "nombres": "a",
-    "apellidos": "a",
-    "correoElectronico": "a",
-    "tituloAcademico": "a",
+    "cedula": "0990000001",
+    "nombres": "Elena",
+    "apellidos": "Torres",
+    "correoElectronico": "elena@demo.khronoac.test",
+    "tituloAcademico": "Ingeniera en Sistemas",
     "diasDisponibles": [
       "Lunes",
       "Martes",
@@ -14,11 +14,11 @@
     ]
   },
   {
-    "cedula": "1315201705",
-    "nombres": "Roberto Geovanny",
-    "apellidos": "Zambrano López",
-    "correoElectronico": "p1315201705@live.uleam.edu.ec",
-    "tituloAcademico": "Ingeniero en Software",
+    "cedula": "0990000002",
+    "nombres": "Mateo",
+    "apellidos": "Vargas",
+    "correoElectronico": "mateo@demo.khronoac.test",
+    "tituloAcademico": "Magíster en Software",
     "diasDisponibles": [
       "Lunes",
       "Martes",
@@ -28,11 +28,11 @@
     ]
   },
   {
-    "cedula": "1316556455",
-    "nombres": "Anthony Alexander",
-    "apellidos": "Anchundia Vera",
-    "correoElectronico": "p1316556355@live.uleam.edu.ec",
-    "tituloAcademico": "",
+    "cedula": "0990000003",
+    "nombres": "Lucía",
+    "apellidos": "Mendoza",
+    "correoElectronico": "lucía@demo.khronoac.test",
+    "tituloAcademico": "Ingeniera en Redes",
     "diasDisponibles": [
       "Lunes",
       "Martes",
@@ -42,11 +42,11 @@
     ]
   },
   {
-    "cedula": "1",
-    "nombres": "1",
-    "apellidos": "1",
-    "correoElectronico": "1",
-    "tituloAcademico": "1",
+    "cedula": "0990000004",
+    "nombres": "Andrés",
+    "apellidos": "Cedeño",
+    "correoElectronico": "andrés@demo.khronoac.test",
+    "tituloAcademico": "Matemático",
     "diasDisponibles": [
       "Lunes",
       "Martes",
@@ -56,13 +56,17 @@
     ]
   },
   {
-    "cedula": "13216548",
-    "nombres": "Alberto",
-    "apellidos": "Sanchez",
-    "correoElectronico": "dadwa@gmai.com",
-    "tituloAcademico": "Ingeniero",
+    "cedula": "0990000005",
+    "nombres": "Valeria",
+    "apellidos": "Ponce",
+    "correoElectronico": "valeria@demo.khronoac.test",
+    "tituloAcademico": "Magíster en Computación",
     "diasDisponibles": [
-      "Miércoles"
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes"
     ]
   }
 ]

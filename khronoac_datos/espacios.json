@@ -1,30 +1,30 @@
 [
   {
-    "codigoAula": "Aula-01",
+    "codigoAula": "Aula-101",
     "capacidadMaxima": 35,
     "tipo": "Aula",
     "tipoLaboratorio": "",
     "equiposEspeciales": ""
   },
   {
-    "codigoAula": "Lab-Comp-01",
+    "codigoAula": "Aula-102",
     "capacidadMaxima": 35,
-    "tipo": "Laboratorio",
-    "tipoLaboratorio": "Redes",
-    "equiposEspeciales": "30 computadoras Core Ultra 7 con Python instalado"
-  },
-  {
-    "codigoAula": "LAB-7",
-    "capacidadMaxima": 35,
-    "tipo": "Laboratorio",
-    "tipoLaboratorio": "Pratico",
+    "tipo": "Aula",
+    "tipoLaboratorio": "",
     "equiposEspeciales": ""
   },
   {
-    "codigoAula": "Aula-06",
+    "codigoAula": "Lab-201",
     "capacidadMaxima": 30,
-    "tipo": "Aula",
-    "tipoLaboratorio": "",
-    "equiposEspeciales": ""
+    "tipo": "Laboratorio",
+    "tipoLaboratorio": "Computación",
+    "equiposEspeciales": "Computadoras, proyector"
+  },
+  {
+    "codigoAula": "Lab-202",
+    "capacidadMaxima": 30,
+    "tipo": "Laboratorio",
+    "tipoLaboratorio": "Computación",
+    "equiposEspeciales": "Computadoras, proyector"
   }
 ]
