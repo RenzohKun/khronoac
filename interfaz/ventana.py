@@ -1,3 +1,8 @@
+# Construye la interfaz Tkinter, sus formularios y las tablas de registros.
+# Presenta el horario recibido del controlador y redibuja su cuadrícula por
+# paralelo o docente. El controlador proporciona los datos cargados desde
+# persistencia y delega las acciones de generación y exportación mediante
+# callbacks, sin escribir archivos ni calcular el plan.
 from __future__ import annotations
 
 import tkinter as tk
