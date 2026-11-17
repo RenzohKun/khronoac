@@ -5,6 +5,7 @@
 # callbacks, sin escribir archivos ni calcular el plan.
 from __future__ import annotations
 
+import re
 import tkinter as tk
 from tkinter import messagebox, ttk
 from typing import Any, Callable
@@ -413,11 +414,24 @@ class KhronoacInterfaz:
         for col in range(5):
             grid.columnconfigure(col, weight=1)
 
-        self.campo(grid, "Cédula / identificador", self.doc_cedula,    0, 0)
+        validar_cedula = (self.raiz.register(self.cedulaValida), "%P")
+        entrada_cedula = self.campo(grid, "Cédula / identificador", self.doc_cedula, 0, 0)
+        entrada_cedula.configure(validate="key", validatecommand=validar_cedula)
         self.campo(grid, "Nombres",                self.doc_nombres,   0, 1)
         self.campo(grid, "Apellidos",              self.doc_apellidos, 0, 2)
         self.campo(grid, "Correo electrónico",     self.doc_correo,    0, 3)
-        self.campo(grid, "Título académico",       self.doc_titulo,    0, 4)
+        bloque_titulo = tk.Frame(grid, bg="#1a2233")
+        bloque_titulo.grid(row=0, column=4, padx=(0, 10), pady=(0, 8), sticky="ew")
+        tk.Label(
+            bloque_titulo, text="Título académico", font=("Segoe UI", 8),
+            bg="#1a2233", fg="#7a8faa",
+        ).pack(anchor="w", pady=(0, 2))
+        ttk.Combobox(
+            bloque_titulo,
+            textvariable=self.doc_titulo,
+            values=("Ingeniero", "Tecnólogo", "Especialización", "Maestría", "Doctorado"),
+            state="readonly",
+        ).pack(fill="x")
 
        
         fila_dias = tk.Frame(card, bg="#1a2233")
@@ -432,7 +446,7 @@ class KhronoacInterfaz:
         fila_btn.pack(fill="x", pady=(12, 0))
         tk.Frame(fila_btn, bg="#1a2233").pack(side="left", expand=True)   
         ttk.Button(fila_btn, text="  ✔  Guardar docente", style="Accent.TButton",
-                   command=self.acciones["guardarDocente"]).pack(side="left", padx=(0, 6))
+                   command=self.guardarDocente).pack(side="left", padx=(0, 6))
         ttk.Button(fila_btn, text="  ✕  Limpiar",
                    command=self.acciones["limpiarDocente"]).pack(side="left")
 
@@ -453,6 +467,33 @@ class KhronoacInterfaz:
         )
         self.tree_docentes = self.crearTree(self.tab_docentes, columnas)
         self.tree_docentes.bind("<<TreeviewSelect>>", self.eventoSeleccionDocente)
+
+    @staticmethod
+    def cedulaValida(valor: str) -> bool:
+        return len(valor) <= 10 and all("0" <= digito <= "9" for digito in valor)
+
+    @staticmethod
+    def correoValido(valor: str) -> bool:
+        return re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", valor) is not None
+
+    def guardarDocente(self) -> None:
+        cedula = self.doc_cedula.get()
+        if cedula and not self.cedulaValida(cedula):
+            self.mostrarAviso(
+                "Cédula inválida",
+                "La cédula debe contener solo números y un máximo de 10 dígitos.",
+            )
+            return
+
+        correo = self.doc_correo.get().strip()
+        if not self.correoValido(correo):
+            self.mostrarAviso(
+                "Correo inválido",
+                "Ingresa un correo válido, por ejemplo nombre@dominio.com.",
+            )
+            return
+
+        self.acciones["guardarDocente"]()
 
     def construirTabAsignaturas(self) -> None:
         self.seccionHeader(
