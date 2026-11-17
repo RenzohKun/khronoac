@@ -2,10 +2,9 @@ from __future__ import annotations
 import tkinter as tk
 from pathlib import Path
 from typing import Any
-from gestion import GestorAsignaturas, GestorDocentes
+from gestion import GestorAsignaturas, GestorDocentes, GestorEspacios
 from persistencia      import KhronoacPersistenciaDatos
 from interfaz          import KhronoacInterfaz
-from fabrica_espacios  import crearEspacio
 from planificacion import (
     DatosPlanificacionInvalidos,
     ServicioPlanificacionHorario,
@@ -49,7 +48,6 @@ class KhronoacApp(tk.Tk):
         )
         self.datos                             = self.persistencia.cargarDatos()
         self.plan_actual: dict[str, Any] | None = self.datos["ultimoHorario"]
-        self.espacio_editando:   str | None    = None
 
         self.interfaz = KhronoacInterfaz(self, {}, DIAS)
         self.gestorDocentes = GestorDocentes(
@@ -63,6 +61,13 @@ class KhronoacApp(tk.Tk):
             self.datos,
             self.persistencia,
             obtenerDocente=self.gestorDocentes.obtener,
+            interfaz=self.interfaz,
+            invalidarPlan=self.invalidarPlan,
+            refrescarListas=self.refrescarListas,
+        )
+        self.gestorEspacios = GestorEspacios(
+            self.datos,
+            self.persistencia,
             interfaz=self.interfaz,
             invalidarPlan=self.invalidarPlan,
             refrescarListas=self.refrescarListas,
@@ -82,10 +87,10 @@ class KhronoacApp(tk.Tk):
             "limpiarAsignatura":   self.gestorAsignaturas.limpiarDesdeInterfaz,
             "eliminarAsignatura":  self.gestorAsignaturas.eliminarDesdeInterfaz,
             "seleccionarAsignatura": self.gestorAsignaturas.seleccionarDesdeInterfaz,
-            "guardarEspacio":      self.guardarEspacio,
-            "limpiarEspacio":      self.limpiarEspacio,
-            "eliminarEspacio":     self.eliminarEspacio,
-            "seleccionarEspacio":  self.seleccionarEspacio,
+            "guardarEspacio":      self.gestorEspacios.guardarDesdeInterfaz,
+            "limpiarEspacio":      self.gestorEspacios.limpiarDesdeInterfaz,
+            "eliminarEspacio":     self.gestorEspacios.eliminarDesdeInterfaz,
+            "seleccionarEspacio":  self.gestorEspacios.seleccionarDesdeInterfaz,
             "generarHorario":      self.generarHorario,
             "construirHorarioDocente": self.construirHorarioDocente,
             "exportarHorario":     self.exportarHorario,
@@ -97,15 +102,6 @@ class KhronoacApp(tk.Tk):
         self.plan_actual = None
         self.datos["ultimoHorario"] = None
 
-    @staticmethod
-    def indicePorClave(
-        registros: list[dict[str, Any]], clave: str, valor: str
-    ) -> int | None:
-        return next(
-            (i for i, registro in enumerate(registros) if registro.get(clave) == valor),
-            None,
-        )
-
     def refrescarListas(self) -> None:
         self.interfaz.actualizarListas(
             self.datos["docentes"],
@@ -113,112 +109,6 @@ class KhronoacApp(tk.Tk):
             self.datos["espacios"],
         )
         self.mostrarPlanGuardado()
-
-    def guardarEspacio(self) -> None:
-        formulario = self.interfaz.leerFormularioEspacio()
-        codigo     = formulario["codigoAula"].strip()
-
-        try:
-            capacidad = int(formulario["capacidadMaxima"])
-            if capacidad < 1:
-                raise ValueError
-        except ValueError:
-            self.interfaz.mostrarAviso(
-                "Capacidad inválida",
-                "La capacidad debe ser un entero mayor que cero.",
-            )
-            return
-
-        if not codigo:
-            self.interfaz.mostrarAviso(
-                "Dato incompleto", "El código del espacio es obligatorio."
-            )
-            return
-
-        tipo = formulario["tipo"]
-        if tipo == "Laboratorio" and not formulario["tipoLaboratorio"].strip():
-            self.interfaz.mostrarAviso("Dato incompleto", "Indica el tipo de laboratorio.")
-            return
-
-        datos_espacio = {
-            **formulario,
-            "codigoAula":        codigo,
-            "capacidadMaxima":   capacidad,
-            "equiposEspeciales": formulario["equiposEspeciales"].strip(),
-            "tipoLaboratorio":   formulario["tipoLaboratorio"].strip(),
-        }
-
-        try:
-            espacio_objeto = crearEspacio(datos_espacio)
-        except ValueError as error:
-            self.interfaz.mostrarAviso("Tipo inválido", str(error))
-            return
-
-        detalle_lab = {
-            "tipoLaboratorio":   getattr(espacio_objeto, "tipoLaboratorio", ""),
-            "equiposEspeciales": getattr(espacio_objeto, "equiposEspeciales", ""),
-        }
-        registro = {
-            "codigoAula":      espacio_objeto.codigoAula,
-            "capacidadMaxima": espacio_objeto.capacidadMaxima,
-            "tipo":            tipo,
-            **detalle_lab,
-        }
-
-        clave_anterior = self.espacio_editando or codigo
-        existente  = self.indicePorClave(self.datos["espacios"], "codigoAula", clave_anterior)
-        duplicado  = next(
-            (
-                e for e in self.datos["espacios"]
-                if e["codigoAula"].casefold() == codigo.casefold()
-                and e["codigoAula"] != clave_anterior
-            ),
-            None,
-        )
-        if duplicado is not None:
-            self.interfaz.mostrarAviso(
-                "Código duplicado", "Ya existe otro espacio con ese código."
-            )
-            return
-
-        if existente is None:
-            self.datos["espacios"].append(registro)
-        else:
-            self.datos["espacios"][existente] = registro
-
-        self.invalidarPlan()
-        self.persistencia.guardarDatos(self.datos)
-        self.limpiarEspacio()
-        self.refrescarListas()
-
-    def seleccionarEspacio(self, codigo: str) -> None:
-        espacio = next(
-            (item for item in self.datos["espacios"] if item["codigoAula"] == codigo),
-            None,
-        )
-        if espacio is None:
-            return
-        self.espacio_editando = espacio["codigoAula"]
-        self.interfaz.cargarEspacio(espacio)
-
-    def limpiarEspacio(self) -> None:
-        self.espacio_editando = None
-        self.interfaz.limpiarEspacio()
-
-    def eliminarEspacio(self) -> None:
-        codigo = self.interfaz.espacioSeleccionado()
-        if codigo is not None and self.interfaz.confirmar(
-            "Confirmar", "¿Eliminar el espacio seleccionado?"
-        ):
-            self.datos["espacios"] = [
-                e for e in self.datos["espacios"] if e["codigoAula"] != codigo
-            ]
-            self.invalidarPlan()
-            self.persistencia.guardarDatos(self.datos)
-            self.limpiarEspacio()
-            self.refrescarListas()
-
-
 
     # Coordina la solicitud de la interfaz y guarda el horario resultante.
     def generarHorario(self) -> None:

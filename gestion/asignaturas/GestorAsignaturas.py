@@ -61,7 +61,6 @@ class GestorAsignaturas:
             )
             return
 
-        self._invalidarPlan()
         self.limpiarDesdeInterfaz()
         self._refrescarListas()
 
@@ -91,7 +90,6 @@ class GestorAsignaturas:
         if resultado is not EstadoGestionAsignatura.ELIMINADO:
             return
 
-        self._invalidarPlan()
         self.limpiarDesdeInterfaz()
         self._refrescarListas()
 
@@ -172,6 +170,8 @@ class GestorAsignaturas:
 
     def _guardarCambios(self) -> None:
         self._datos["ultimoHorario"] = None
+        # El controlador tampoco debe conservar el plan si falla la escritura.
+        self._invalidarPlan()
         self._persistencia.guardarDatos(self._datos)
 
     @staticmethod
