@@ -23,6 +23,7 @@ class SolicitudHorarioInvalida(ValueError):
         super().__init__(motivo.value)
 
 
+# -------- Facade --------
 class ServicioKhronoac:
     def __init__(
         self,
@@ -93,3 +94,4 @@ def crearServicioKhronoac(
     persistencia = KhronoacPersistenciaDatos(directorioDatos)
     servicioPlanificacion = ServicioPlanificacionHorario(dias, horaInicio, horaFin)
     return ServicioKhronoac(persistencia, servicioPlanificacion)
+# ----- Fin del patrón Facade ------------

@@ -1,8 +1,9 @@
 from modelos.Asignatura import Asignatura
-from modelos.EspacioFisico import EspacioFisico
+from modelos.EspacioFisico import EspacioDecorador, EspacioFisico
 
 
-class Laboratorio(EspacioFisico):
+# -------- Decorator: laboratorio concreto --------
+class Laboratorio(EspacioDecorador):
     def __init__(
         self,
         codigoAula: str,
@@ -10,7 +11,7 @@ class Laboratorio(EspacioFisico):
         equiposEspeciales: str,
         tipoLaboratorio: str,
     ) -> None:
-        super().__init__(codigoAula, capacidadMaxima)
+        super().__init__(EspacioFisico(codigoAula, capacidadMaxima))
         self.__equiposEspeciales = equiposEspeciales
         self.__tipoLaboratorio = tipoLaboratorio
 
@@ -35,3 +36,4 @@ class Laboratorio(EspacioFisico):
         if not isinstance(asignatura, Asignatura):
             raise TypeError("Se esperaba un objeto Asignatura.")
         return asignatura.requiereLaboratorio()
+# ----- Fin del patrón Decorator ------------

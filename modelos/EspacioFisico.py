@@ -64,11 +64,47 @@ class EspacioFisico:
     def esAptoParaAsignatura(self, asignatura: Asignatura) -> bool:
         return not asignatura.requiereLaboratorio()
 
-def esAptoParaAsignatura(self, asignatura: Asignatura) -> bool:
-    return not asignatura.requiereLaboratorio()
 
-def esAptoParaAsignatura(self, asignatura: Asignatura) -> bool:
-    return asignatura.requiereLaboratorio()
+# -------- Decorator --------
+class EspacioDecorador(EspacioFisico):
+    """Envuelve un espacio y delega su comportamiento base."""
 
-    if espacio.esAptoParaAsignatura(asignatura):
-        espacios_validos.append((clave, espacio))
+    def __init__(self, componente: EspacioFisico) -> None:
+        super().__init__(componente.codigoAula, componente.capacidadMaxima)
+        self.__componente = componente
+
+    @property
+    def codigoAula(self) -> str:
+        return self.__componente.codigoAula
+
+    @codigoAula.setter
+    def codigoAula(self, valor: str) -> None:
+        self.__componente.codigoAula = valor
+
+    @property
+    def capacidadMaxima(self) -> int:
+        return self.__componente.capacidadMaxima
+
+    @capacidadMaxima.setter
+    def capacidadMaxima(self, valor: int) -> None:
+        self.__componente.capacidadMaxima = valor
+
+    @property
+    def franjasOcupadas(self) -> List[FranjaHoraria]:
+        return self.__componente.franjasOcupadas
+
+    def verificarAforo(self, cantidad: int) -> int:
+        return self.__componente.verificarAforo(cantidad)
+
+    def estaDisponible(self, franja: FranjaHoraria) -> bool:
+        return self.__componente.estaDisponible(franja)
+
+    def reservarFranja(self, franja: FranjaHoraria) -> bool:
+        return self.__componente.reservarFranja(franja)
+
+    def liberarFranja(self, franja: FranjaHoraria) -> bool:
+        return self.__componente.liberarFranja(franja)
+
+    def esAptoParaAsignatura(self, asignatura: Asignatura) -> bool:
+        return self.__componente.esAptoParaAsignatura(asignatura)
+# ----- Fin del patrón Decorator ------------
