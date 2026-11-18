@@ -4,7 +4,12 @@ from typing import Any
 
 from .EntradaPlanificacion import adaptarDatosPlanificacion
 from .EstrategiaPlanificacion import EstrategiaPlanificacion
-from .HorarioBuilder import HorarioDirector, HorarioResultado
+from .HorarioBuilder import (
+    HorarioAcademicoBuilder,
+    HorarioDirector,
+    HorarioDocenteBuilder,
+    HorarioResultado,
+)
 from .ObservadorHorario import (
     HistorialEventosHorario,
     ObservadorHorario,
@@ -70,8 +75,8 @@ class ServicioPlanificacionHorario:
             self.__horaFin,
         )
         resultado = self.__planificador.generarHorario(datos, minimo)
-        horario = self.__horarioDirector.construirHorarioAcademico(
-            resultado, idHorario, periodo
+        horario = self.__horarioDirector.construir(
+            HorarioAcademicoBuilder(), resultado, idHorario, periodo
         )
         self.__sujetoEventos.notificar(
             "horarioGenerado",
@@ -88,9 +93,19 @@ class ServicioPlanificacionHorario:
     def construirHorarioDocente(
         self, horarioGuardado: dict[str, Any], cedulaDocente: str
     ) -> dict[str, Any]:
-        # Reconstruye el DTO del JSON y delega el filtrado al Builder docente.
+        # Filtra las sesiones y paralelos del docente antes de construir su vista.
         resultado = ResultadoPlanificacion.desdeDiccionario(horarioGuardado)
-        horario = self.__horarioDirector.construirHorarioDocente(
-            resultado, cedulaDocente
+        resultadoDocente = ResultadoPlanificacion(
+            paralelos=[
+                p for p in resultado.paralelos if p.get("docenteCedula") == cedulaDocente
+            ],
+            sesiones=[
+                s for s in resultado.sesiones if s.get("docente") == cedulaDocente
+            ],
+            estadisticas=dict(resultado.estadisticas),
+            franjasSinConflicto=resultado.franjasSinConflicto,
+        )
+        horario = self.__horarioDirector.construir(
+            HorarioDocenteBuilder(), resultadoDocente, "HOR-DOC-01", "Periodo actual"
         )
         return horario.aDiccionario()
