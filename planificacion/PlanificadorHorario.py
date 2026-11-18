@@ -1,5 +1,4 @@
 # Este módulo calcula paralelos y asigna franjas, docentes y espacios sin conflictos.
-
 from __future__ import annotations
 
 import math
@@ -10,22 +9,34 @@ from modelos.EspacioFisico import EspacioFisico
 from modelos.FranjaHoraria import FranjaHoraria
 from .EntradaPlanificacion import DatosPlanificacion
 from .ErroresPlanificacion import DatosPlanificacionInvalidos, SinPlanificacionDisponible
+from .EstrategiaPlanificacion import EstrategiaBalanceada, EstrategiaPlanificacion
 from .ResultadoPlanificacion import ResultadoPlanificacion
+
 
 class PlanificadorHorario:
     # Calcula paralelos y asigna sus franjas usando datos ya normalizados.
-
     def __init__(
         self,
         dias: tuple[str, ...],
         hora_inicio: int,
         hora_fin: int,
         limite_nodos: int = 250_000,
+        estrategia: EstrategiaPlanificacion | None = None,
     ) -> None:
         self.__dias = dias
         self.__hora_inicio = hora_inicio
         self.__hora_fin = hora_fin
         self.__limite_nodos = limite_nodos
+        self.__estrategia: EstrategiaPlanificacion = estrategia or EstrategiaBalanceada()
+
+    @property
+    def estrategia(self) -> EstrategiaPlanificacion:
+        return self.__estrategia
+
+    def establecerEstrategia(self, estrategia: EstrategiaPlanificacion) -> None:
+        if not isinstance(estrategia, EstrategiaPlanificacion):
+            raise TypeError("La estrategia debe implementar EstrategiaPlanificacion.")
+        self.__estrategia = estrategia
 
     def generarHorario(
         self,
@@ -35,7 +46,6 @@ class PlanificadorHorario:
         # Recibe la entrada normalizada y devuelve el resultado del algoritmo.
         docentes = datos.docentes
         espacios = datos.espacios
-
         secciones: list[dict[str, Any]] = []
         tareas: list[dict[str, Any]] = []
         problemas: list[str] = []
@@ -109,7 +119,6 @@ class PlanificadorHorario:
                             for codigo, espacio in espacios_validos:
                                 if espacio.capacidadMaxima >= cantidad:
                                     candidatos.append((dia, hora, codigo))
-
                     if not candidatos:
                         problemas.append(
                             f"{nombre_paralelo}, bloque {numero_hora}: el docente"
@@ -172,19 +181,17 @@ class PlanificadorHorario:
 
             tarea = tareas[indice]
             seccion = tarea["seccion"]
-            candidatos = sorted(
+            candidatos = self.__estrategia.ordenarCandidatos(
                 tarea["franjasCandidatas"],
-                key=lambda candidato: (
-                    sesiones_por_dia[candidato[0]],
-                    self.__dias.index(candidato[0]),
-                    candidato[1],
-                    candidato[2],
-                ),
+                sesiones_por_dia,
+                self.__dias,
             )
+
             for dia, hora, codigo in candidatos:
                 clave_docente = (seccion["docenteCedula"], dia, hora)
                 clave_paralelo = (seccion["nombreParalelo"], dia, hora)
                 espacio = espacios[codigo]
+
                 if clave_docente in docentes_ocupados or clave_paralelo in paralelos_ocupados:
                     continue
 
@@ -220,13 +227,13 @@ class PlanificadorHorario:
                 docentes_ocupados.remove(clave_docente)
                 paralelos_ocupados.remove(clave_paralelo)
                 espacio.liberarFranja(franja)
+
             return False
 
         tareas.sort(key=lambda tarea: len(tarea["franjasCandidatas"]))
         return resultado if buscar(0) else None
 
     def tieneConflicto(self, sesiones: list[dict[str, Any]]) -> bool:
-
         # Verifica que una sesión no repita recurso, día y hora.
         ocupaciones: set[tuple[str, str, str]] = set()
         for sesion in sesiones:
