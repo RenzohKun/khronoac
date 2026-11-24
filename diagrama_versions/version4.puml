@@ -1,0 +1,635 @@
+@startuml version4
+' ==========================================================================
+'  Khronoac - Diagrama de clases (versión 4)
+'  Generado a partir del código fuente actual (sin cambios en el código).
+'
+'  Convenciones:
+'    <<interface>>  : clase ABC cuyos miembros son todos abstractos
+'    abstract       : clase ABC con al menos un método abstracto
+'    enum           : enumeraciones (str, Enum)
+'    <<dataclass>>  : @dataclass(frozen=True)
+'    <<exception>>  : excepciones propias del sistema
+'    <<singleton>>  : clase con una sola instancia (__new__)
+'  Las clases base externas (tk.Tk, ValueError, RuntimeError) se indican
+'  dentro de cada clase con "hereda de ...".
+'
+'  Visibilidad (convención de Python):
+'    -  atributo "__privado"  (se expone con @property cuando tiene getter/setter)
+'    #  atributo "_protegido"
+'    +  público
+' ==========================================================================
+
+top to bottom direction
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam nodesep 45
+skinparam ranksep 60
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #34495E
+  ArrowColor #34495E
+}
+skinparam class {
+  BackgroundColor<<interface>> #E8F6EF
+  BorderColor<<interface>> #1E8449
+  BackgroundColor<<exception>> #FDEDEC
+  BorderColor<<exception>> #C0392B
+  BackgroundColor<<dataclass>> #FEF9E7
+}
+skinparam package {
+  BackgroundColor #FBFCFC
+  BorderColor #AAB7B8
+}
+
+' ==========================================================================
+'  CAPA DE PRESENTACIÓN
+' ==========================================================================
+package "main.py" as pkg_main {
+  class KhronoacApp {
+    .. hereda de tk.Tk ..
+    + servicioAplicacion: ServicioKhronoac
+    + datos: dict
+    + interfaz: KhronoacInterfaz
+    + gestorDocentes: GestorDocentes
+    + gestorAsignaturas: GestorAsignaturas
+    + gestorEspacios: GestorEspacios
+    --
+    + __init__()
+    + crearAccionesInterfaz(): dict
+    + refrescarListas(): void
+    + generarHorario(): void
+    + mostrarPlanGuardado(): void
+    + construirHorarioDocente(cedulaDocente: str): dict | None
+    + exportarHorario(): void
+  }
+}
+
+package "interfaz" as pkg_interfaz {
+  class KhronoacInterfaz {
+    + raiz: tk.Misc
+    + acciones: dict[str, Callable]
+    + dias: tuple[str]
+    + hora_inicio: int
+    + hora_fin: int
+    + plan_horario: dict | None
+    + docentes_horario: list
+    + vistasDocentes: dict
+    + planVistaActual: dict | None
+    + tree_docentes / tree_asignaturas / tree_espacios: ttk.Treeview
+    + horario_canvas: tk.Canvas
+    + doc_* / asig_* / esp_*: tk.StringVar
+    + minimo_var: tk.StringVar
+    + paralelo_var: tk.StringVar
+    # _sidebar / _contenedor / _frame_activo / _btn_sidebar
+    --
+    .. construcción ..
+    + construir(): void
+    + configurarEstilos(): void
+    + construirInterfaz(): void
+    + cambiarSeccion(clave_activa, frame, indicador, lbl_icono, lbl_texto, cuerpo): void
+    + construirTabDocentes(): void
+    + construirTabAsignaturas(): void
+    + construirTabEspacios(): void
+    + construirTabHorario(): void
+    + diaToggle(parent, dia: str): tk.Button
+    + {static} crearTree(parent, columnas): ttk.Treeview
+    + {static} seccionHeader(parent, icono, titulo, subtitulo): void
+    + {static} campo(parent, titulo, variable, fila, columna, ancho): ttk.Entry
+    .. lectura de formularios ..
+    + leerFormularioDocente(): dict
+    + leerFormularioAsignatura(): dict
+    + leerFormularioEspacio(): dict
+    + leerMinimoParalelo(): str
+    + docenteSeleccionado(): str | None
+    + asignaturaSeleccionada(): str | None
+    + espacioSeleccionado(): str | None
+    + {static} idSeleccionado(tabla): str | None
+    .. carga y limpieza ..
+    + cargarDocente(docente: dict): void
+    + cargarAsignatura(asignatura: dict, docente: dict | None): void
+    + cargarEspacio(espacio: dict): void
+    + limpiarDocente(): void
+    + limpiarAsignatura(): void
+    + limpiarEspacio(): void
+    + actualizarListas(docentes, asignaturas, espacios): void
+    .. horario ..
+    + mostrarHorario(plan: dict | None, docentes: list): void
+    + redibujarHorario(_evento): void
+    + mostrarEstadoHorario(texto: str): void
+    + {static} etiquetaDocente(docente: dict | None): str
+    .. mensajes ..
+    + {static} mostrarAviso(titulo, texto): void
+    + {static} mostrarError(titulo, texto): void
+    + {static} mostrarInformacion(titulo, texto): void
+    + {static} confirmar(titulo, texto): bool
+    .. eventos ..
+    + eventoCambioParalelo(_evento): void
+    + eventoSeleccionDocente(_evento): void
+    + eventoSeleccionAsignatura(_evento): void
+    + eventoSeleccionEspacio(_evento): void
+  }
+}
+
+' ==========================================================================
+'  CAPA DE APLICACIÓN
+' ==========================================================================
+package "aplicacion" as pkg_aplicacion {
+  class ServicioKhronoac {
+    # _persistencia: KhronoacPersistenciaDatos
+    # _servicioPlanificacion: ServicioPlanificacionHorario
+    + datos: dict
+    --
+    + <<property>> persistencia: KhronoacPersistenciaDatos
+    + invalidarHorario(): void
+    + obtenerHorario(): dict | None
+    + generarHorario(minimo: int): dict
+    + construirHorarioDocente(cedulaDocente: str): dict | None
+    + exportarHorario(): Path | None
+  }
+
+  enum MotivoSolicitudHorarioInvalida {
+    SIN_ASIGNATURAS
+    SIN_RECURSOS
+    MINIMO_INVALIDO
+  }
+
+  class SolicitudHorarioInvalida <<exception>> {
+    .. hereda de ValueError ..
+    + motivo: MotivoSolicitudHorarioInvalida
+  }
+
+  note bottom of ServicioKhronoac
+    Función de fábrica del módulo:
+    crearServicioKhronoac(directorioDatos, dias,
+    horaInicio, horaFin): ServicioKhronoac
+  end note
+}
+
+' ==========================================================================
+'  CAPA DE GESTIÓN (catálogos)
+' ==========================================================================
+package "gestion" as pkg_gestion {
+  class GestorDocentes {
+    # _datos: dict
+    # _persistencia: KhronoacPersistenciaDatos
+    # _interfaz: Any | None
+    # _invalidar_plan: Callable
+    # _refrescar_listas: Callable
+    # _cedula_editando: str | None
+    --
+    + guardarDesdeInterfaz(): void
+    + seleccionarDesdeInterfaz(cedula: str): void
+    + limpiarDesdeInterfaz(): void
+    + eliminarDesdeInterfaz(): void
+    + obtener(cedula: str): dict | None
+    + estaAsignado(cedula: str): bool
+    + guardar(formulario, cedula_anterior): EstadoGestionDocente
+    + eliminar(cedula: str): EstadoGestionDocente
+    # _interfazRequerida(): Any
+    # _guardarCambios(): void
+    # {static} _indicePorCedula(docentes, cedula): int | None
+  }
+
+  enum EstadoGestionDocente {
+    GUARDADO
+    ELIMINADO
+    DATOS_INCOMPLETOS
+    DISPONIBILIDAD_REQUERIDA
+    CEDULA_DUPLICADA
+    NO_ENCONTRADO
+    DOCENTE_ASIGNADO
+  }
+
+  package "asignaturas" as pkg_g_asig {
+    class GestorAsignaturas {
+      # _datos: dict
+      # _persistencia: KhronoacPersistenciaDatos
+      # _obtenerDocente: Callable[[str], dict | None]
+      # _interfaz: Any | None
+      # _invalidarPlan: Callable
+      # _refrescarListas: Callable
+      # _nombreEditando: str | None
+      --
+      + guardarDesdeInterfaz(): void
+      + seleccionarDesdeInterfaz(nombre: str): void
+      + limpiarDesdeInterfaz(): void
+      + eliminarDesdeInterfaz(): void
+      + obtener(nombre: str): dict | None
+      + guardar(datosAsignatura, nombreAnterior): EstadoGestionAsignatura
+      + eliminar(nombre: str): EstadoGestionAsignatura
+      # _interfazRequerida(): Any
+      # _guardarCambios(): void
+      # {static} _indicePorNombre(asignaturas, nombre): int | None
+    }
+
+    enum EstadoGestionAsignatura {
+      GUARDADO
+      ELIMINADO
+      VALORES_INVALIDOS
+      DATOS_INCOMPLETOS
+      NOMBRE_DUPLICADO
+      NO_ENCONTRADO
+    }
+  }
+
+  package "espacios" as pkg_g_esp {
+    class GestorEspacios {
+      # _datos: dict
+      # _persistencia: KhronoacPersistenciaDatos
+      # _interfaz: Any | None
+      # _invalidarPlan: Callable
+      # _refrescarListas: Callable
+      # _codigoEditando: str | None
+      --
+      + guardarDesdeInterfaz(): void
+      + seleccionarDesdeInterfaz(codigo: str): void
+      + limpiarDesdeInterfaz(): void
+      + eliminarDesdeInterfaz(): void
+      + obtener(codigo: str): dict | None
+      + guardar(datosEspacio, codigoAnterior): EstadoGestionEspacio
+      + eliminar(codigo: str): EstadoGestionEspacio
+      # _interfazRequerida(): Any
+      # _guardarCambios(): void
+      # {static} _indicePorCodigo(espacios, codigo): int | None
+    }
+
+    enum EstadoGestionEspacio {
+      GUARDADO
+      ELIMINADO
+      CAPACIDAD_INVALIDA
+      CODIGO_REQUERIDO
+      TIPO_LABORATORIO_REQUERIDO
+      CODIGO_DUPLICADO
+      NO_ENCONTRADO
+    }
+
+    class _EspacioInvalido <<exception>> {
+      .. hereda de ValueError ..
+    }
+  }
+}
+
+' ==========================================================================
+'  CAPA DE PLANIFICACIÓN (Adapter + Builder)
+' ==========================================================================
+package "planificacion" as pkg_planificacion {
+  class ServicioPlanificacionHorario {
+    - __dias: tuple[str]
+    - __horaInicio: int
+    - __horaFin: int
+    - __planificador: PlanificadorHorario
+    - __horarioDirector: HorarioDirector
+    - __constructoresBuilder: dict[str, Callable[[], HorarioBuilder]]
+    --
+    + registrarBuilder(tipoHorario: str, constructor: Callable): void
+    + construirHorario(tipoHorario, resultadoPlanificacion, idHorario, periodo): HorarioResultado
+    + generarHorarioAcademico(registrosAsignaturas, registrosDocentes, registrosEspacios, minimo, idHorario, periodo): HorarioResultado
+    + construirHorarioDocente(horarioGuardado: dict, cedulaDocente: str): dict
+  }
+
+  class PlanificadorHorario {
+    - __dias: tuple[str]
+    - __hora_inicio: int
+    - __hora_fin: int
+    - __limite_nodos: int
+    --
+    + generarHorario(datos: DatosPlanificacion, minimo: int): ResultadoPlanificacion
+    + asignarBloques(tareas: list, espacios: dict[str, EspacioFisico]): list | None
+    + tieneConflicto(sesiones: list): bool
+  }
+
+  class AsignaturaPlanificacion <<dataclass>> {
+    + asignatura: Asignatura
+    + docenteCedula: str
+    + demandaEstimada: int
+  }
+
+  class DatosPlanificacion <<dataclass>> {
+    + asignaturas: list[AsignaturaPlanificacion]
+    + docentes: dict[str, Docente]
+    + espacios: dict[str, EspacioFisico]
+  }
+
+  note right of DatosPlanificacion
+    EntradaPlanificacion.py (adaptador de entrada):
+    adaptarDatosPlanificacion(...): DatosPlanificacion
+    crearDocente(registro, horaInicio, horaFin): Docente
+  end note
+
+  class ResultadoPlanificacion {
+    + paralelos: list[dict]
+    + sesiones: list[dict]
+    + estadisticas: dict
+    + franjasSinConflicto: bool
+    --
+    + {static} desdeDiccionario(datos: dict): ResultadoPlanificacion
+    + paraDocente(cedulaDocente: str): ResultadoPlanificacion
+    + aDiccionario(): dict
+  }
+
+  class HorarioDirector {
+    + construir(builder: HorarioBuilder, resultadoPlanificacion, idHorario, periodo): HorarioResultado
+  }
+
+  class HorarioBuilder {
+    + {static} tipoHorario: str = "Académico Presencial"
+    # _id_horario: str
+    # _periodo_academico: str
+    # _tipo_horario: str
+    # _resultadoPlanificacion: ResultadoPlanificacion | None
+    --
+    + reset(): HorarioBuilder
+    + conIdentificador(id_horario, periodo, tipo): HorarioBuilder
+    + conResultadoPlanificacion(resultadoPlanificacion): HorarioBuilder
+    + construir(): HorarioResultado
+  }
+
+  class HorarioAcademicoBuilder {
+    + {static} tipoHorario: str = "Académico"
+  }
+  class HorarioExamenesBuilder {
+    + {static} tipoHorario: str = "Exámenes"
+  }
+  class HorarioDocenteBuilder {
+    + {static} tipoHorario: str = "Horario docente"
+  }
+
+  class HorarioResultado {
+    + horario: Horario
+    + resultadoPlanificacion: ResultadoPlanificacion
+    + paralelos: list[dict]
+    + sesiones: list[dict]
+    + estadisticas: dict
+    + franjasSinConflicto: bool
+    --
+    + aDiccionario(): dict
+    + __str__(): str
+  }
+
+  class DatosPlanificacionInvalidos <<exception>> {
+    .. hereda de ValueError ..
+  }
+  class SinPlanificacionDisponible <<exception>> {
+    .. hereda de RuntimeError ..
+  }
+}
+
+' ==========================================================================
+'  FÁBRICA DE ESPACIOS (Factory Method)
+' ==========================================================================
+package "fabrica_espacios" as pkg_fabrica {
+  abstract class CreadorEspacio {
+    + crear(datos: Mapping): EspacioFisico
+    + {abstract} factoryMethod(datos: Mapping): EspacioFisico
+  }
+  class CreadorAula {
+    + factoryMethod(datos: Mapping): EspacioFisico
+  }
+  class CreadorLaboratorio {
+    + factoryMethod(datos: Mapping): EspacioFisico
+  }
+
+  note bottom of CreadorEspacio
+    creadores.py:
+    CREADORES_ESPACIO: dict[str, CreadorEspacio]
+    crearEspacio(datos: Mapping): EspacioFisico
+  end note
+}
+
+' ==========================================================================
+'  PERSISTENCIA (Singleton)
+' ==========================================================================
+package "persistencia" as pkg_persistencia {
+  class KhronoacPersistenciaDatos <<singleton>> {
+    # {static} _instancia: KhronoacPersistenciaDatos | None
+    # _inicializado: bool
+    - __directorio_datos: Path
+    --
+    + __new__(cls): KhronoacPersistenciaDatos
+    + cargarDatos(): dict
+    + guardarDatos(datos: Mapping): void
+    + guardarHorarioExportado(horario: Mapping, nombre_archivo: str): Path
+    + leerSeccion(nombre: str, por_defecto): Any
+    + guardarSeccion(nombre: str, contenido): void
+  }
+}
+
+' ==========================================================================
+'  MODELOS DE DOMINIO
+' ==========================================================================
+package "modelos" as pkg_modelos {
+  abstract class Persona {
+    - __cedula: str
+    - __nombres: str
+    - __apellidos: str
+    - __correoElectronico: str
+    --
+    + {abstract} obtenerDatos(): str
+    + {abstract} obtenerCargaAcademica(): str
+  }
+
+  class Estudiante {
+    - __tipoEstudiante: str
+    - __materiasInscritas: list[Asignatura]
+    --
+    + obtenerTipoEstudiante(): str
+    + obtenerMateriasInscritas(): list[Asignatura]
+    + obtenerDatos(): str
+    + obtenerCargaAcademica(): str
+  }
+
+  class Docente {
+    - __tituloAcademico: str
+    - __disponibilidad: list[FranjaHoraria]
+    --
+    + registrarDisponibilidad(franja: FranjaHoraria): void
+    + verificarDisponibilidad(franja: FranjaHoraria): bool
+    + obtenerDatos(): str
+    + obtenerCargaAcademica(): str
+  }
+
+  class AsistenteDocente {
+    - __horasAsignadaAsistencia: int
+    - __docenteApoya: str
+    --
+    + programarAsistencia(): void
+    + obtenerCargaAcademica(): str
+  }
+
+  class Asignatura {
+    - __nombreAsignatura: str
+    - __horasRequeridas: int
+    - __requiereLaboratorio: bool
+    --
+    + obtenerHorasTotales(): int
+    + requiereLaboratorio(): bool
+    + establecerRequiereLaboratorio(valor: bool): void
+    + __str__(): str
+  }
+
+  class Paralelo {
+    - __nombreParalelo: str
+    - __cupoMaximo: int
+    - __estudiantesInscritos: list[Estudiante]
+    - __asignatura: Asignatura | None
+    --
+    + agregarEstudiante(estudiante: Estudiante): void
+    + calcularDemanda(): int
+  }
+
+  class EspacioFisico {
+    - __codigoAula: str
+    - __capacidadMaxima: int
+    - __franjasOcupadas: list[FranjaHoraria]
+    --
+    + {static} validarCapacidad(valor: int): void
+    + verificarAforo(cantidad: int): int
+    + estaDisponible(franja: FranjaHoraria): bool
+    + reservarFranja(franja: FranjaHoraria): bool
+    + liberarFranja(franja: FranjaHoraria): bool
+    + esAptoParaAsignatura(asignatura: Asignatura): bool
+  }
+
+  class Laboratorio {
+    - __equiposEspeciales: str
+    - __tipoLaboratorio: str
+    --
+    + esAptoParaAsignatura(asignatura: Asignatura): bool
+  }
+
+  class FranjaHoraria {
+    - __diaSemana: str
+    - __horaInicio: time
+    - __horaFin: time
+    --
+    + validarHoras(): void
+    + verificarSolapamiento(otraFranja: IFranjaHoraria): bool
+    + clonar(nuevoDia, nuevaHoraInicio, nuevaHoraFin): FranjaHoraria
+  }
+
+  class Horario {
+    - __idHorario: str
+    - __periodoAcademico: str
+    - __tipoHorario: str
+    - __franjasHorarias: list[IFranjaHoraria]
+    --
+    + agregarFranja(franja: IFranjaHoraria): void
+    + validarConflictos(): bool
+    + generarMallaHoraria(): str
+  }
+}
+
+' ==========================================================================
+'  ABSTRACCIONES
+' ==========================================================================
+package "abstraccion" as pkg_abstraccion {
+  interface IFranjaHoraria <<interface>> {
+    + {abstract} <<property>> diaSemana: str
+    + {abstract} <<property>> horaInicio: time
+    + {abstract} <<property>> horaFin: time
+    + {abstract} verificarSolapamiento(otraFranja: IFranjaHoraria): bool
+  }
+}
+
+' ==========================================================================
+'  HERENCIA Y REALIZACIÓN
+' ==========================================================================
+Persona <|-- Estudiante
+Persona <|-- Docente
+Estudiante <|-- AsistenteDocente
+EspacioFisico <|-- Laboratorio
+IFranjaHoraria <|.. FranjaHoraria
+
+CreadorEspacio <|-- CreadorAula
+CreadorEspacio <|-- CreadorLaboratorio
+
+HorarioBuilder <|-- HorarioAcademicoBuilder
+HorarioBuilder <|-- HorarioExamenesBuilder
+HorarioBuilder <|-- HorarioDocenteBuilder
+
+
+' ==========================================================================
+'  PRESENTACIÓN -> APLICACIÓN / GESTIÓN
+' ==========================================================================
+KhronoacApp *-- "1" KhronoacInterfaz : interfaz
+KhronoacApp *-- "1" ServicioKhronoac : servicioAplicacion
+KhronoacApp *-- "1" GestorDocentes
+KhronoacApp *-- "1" GestorAsignaturas
+KhronoacApp *-- "1" GestorEspacios
+
+GestorDocentes --> "0..1" KhronoacInterfaz : _interfaz
+GestorAsignaturas --> "0..1" KhronoacInterfaz : _interfaz
+GestorEspacios --> "0..1" KhronoacInterfaz : _interfaz
+
+' ==========================================================================
+'  APLICACIÓN
+' ==========================================================================
+ServicioKhronoac --> "1" KhronoacPersistenciaDatos : _persistencia
+ServicioKhronoac --> "1" ServicioPlanificacionHorario : _servicioPlanificacion
+ServicioKhronoac ..> SolicitudHorarioInvalida : lanza
+SolicitudHorarioInvalida --> "1" MotivoSolicitudHorarioInvalida : motivo
+
+' ==========================================================================
+'  GESTIÓN
+' ==========================================================================
+GestorDocentes --> "1" KhronoacPersistenciaDatos : _persistencia
+GestorAsignaturas --> "1" KhronoacPersistenciaDatos : _persistencia
+GestorEspacios --> "1" KhronoacPersistenciaDatos : _persistencia
+
+GestorDocentes ..> EstadoGestionDocente : retorna
+GestorAsignaturas ..> EstadoGestionAsignatura : retorna
+GestorEspacios ..> EstadoGestionEspacio : retorna
+
+GestorAsignaturas ..> Asignatura : valida con
+GestorEspacios ..> CreadorEspacio : usa crearEspacio()
+GestorEspacios ..> _EspacioInvalido : lanza
+
+' ==========================================================================
+'  PLANIFICACIÓN
+' ==========================================================================
+ServicioPlanificacionHorario *-- "1" PlanificadorHorario : __planificador
+ServicioPlanificacionHorario *-- "1" HorarioDirector : __horarioDirector
+ServicioPlanificacionHorario ..> HorarioBuilder : registra / instancia
+ServicioPlanificacionHorario ..> DatosPlanificacion : adaptarDatosPlanificacion()
+
+DatosPlanificacion *-- "0..*" AsignaturaPlanificacion : asignaturas
+DatosPlanificacion o-- "0..*" Docente : docentes
+DatosPlanificacion o-- "0..*" EspacioFisico : espacios
+AsignaturaPlanificacion --> "1" Asignatura : asignatura
+DatosPlanificacion ..> CreadorEspacio : usa crearEspacio()
+
+PlanificadorHorario ..> DatosPlanificacion : recibe
+PlanificadorHorario ..> ResultadoPlanificacion : crea
+PlanificadorHorario ..> FranjaHoraria : clona prototipo
+PlanificadorHorario ..> DatosPlanificacionInvalidos : lanza
+PlanificadorHorario ..> SinPlanificacionDisponible : lanza
+
+HorarioDirector ..> HorarioBuilder : dirige
+HorarioBuilder o-- "0..1" ResultadoPlanificacion : _resultadoPlanificacion
+HorarioBuilder ..> HorarioResultado : construye
+HorarioBuilder ..> FranjaHoraria : crea
+HorarioResultado *-- "1" Horario : horario
+HorarioResultado --> "1" ResultadoPlanificacion : resultadoPlanificacion
+
+' ==========================================================================
+'  FÁBRICA
+' ==========================================================================
+CreadorEspacio ..> EspacioFisico : crea
+CreadorAula ..> EspacioFisico : crea
+CreadorLaboratorio ..> Laboratorio : crea
+
+' ==========================================================================
+'  DOMINIO
+' ==========================================================================
+Estudiante o-- "0..*" Asignatura : materiasInscritas
+Docente o-- "0..*" FranjaHoraria : disponibilidad
+Paralelo o-- "0..*" Estudiante : estudiantesInscritos
+Paralelo --> "0..1" Asignatura : asignatura
+EspacioFisico o-- "0..*" FranjaHoraria : franjasOcupadas
+EspacioFisico ..> Asignatura : evalúa aptitud
+Horario o-- "0..*" IFranjaHoraria : franjasHorarias
+
+@enduml

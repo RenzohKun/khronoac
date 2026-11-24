@@ -24,9 +24,7 @@ HORA_FIN    = 20
 
 
 class KhronoacApp(tk.Tk):
-    # Controlador principal que organiza la ventana y enlaza vistas y gestores.
-
-   
+    # Controlador principal que organiza la ventana y enlaza vistas y gestores. 
 
     def __init__(self) -> None:
         super().__init__()
