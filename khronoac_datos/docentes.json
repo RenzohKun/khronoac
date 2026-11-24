@@ -68,5 +68,19 @@
       "Jueves",
       "Viernes"
     ]
+  },
+  {
+    "cedula": "0990000006",
+    "nombres": "Anthony",
+    "apellidos": "Alexander",
+    "correoElectronico": "anthony@demo.khronoac.test",
+    "tituloAcademico": "Doctorado",
+    "diasDisponibles": [
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes"
+    ]
   }
 ]

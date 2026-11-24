@@ -1,22 +1,25 @@
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any
 
 from .EntradaPlanificacion import adaptarDatosPlanificacion
+from .EstrategiaPlanificacion import EstrategiaPlanificacion
 from .HorarioBuilder import (
     HorarioAcademicoBuilder,
-    HorarioBuilder,
     HorarioDirector,
     HorarioDocenteBuilder,
-    HorarioExamenesBuilder,
     HorarioResultado,
+)
+from .ObservadorHorario import (
+    HistorialEventosHorario,
+    ObservadorHorario,
+    SujetoPlanificacion,
 )
 from .PlanificadorHorario import PlanificadorHorario
 from .ResultadoPlanificacion import ResultadoPlanificacion
 
 
 class ServicioPlanificacionHorario:
-
     # Conecta el adaptador de entrada, PlanificadorHorario y HorarioDirector.
     def __init__(
         self,
@@ -24,46 +27,34 @@ class ServicioPlanificacionHorario:
         horaInicio: int,
         horaFin: int,
         limiteNodos: int = 250_000,
+        estrategia: EstrategiaPlanificacion | None = None,
     ) -> None:
         self.__dias = dias
         self.__horaInicio = horaInicio
         self.__horaFin = horaFin
         self.__planificador = PlanificadorHorario(
-            dias, horaInicio, horaFin, limiteNodos
+            dias, horaInicio, horaFin, limiteNodos, estrategia
         )
         self.__horarioDirector = HorarioDirector()
-        self.__constructoresBuilder: dict[str, Callable[[], HorarioBuilder]] = {
-            "academico": HorarioAcademicoBuilder,
-            "examenes": HorarioExamenesBuilder,
-            "docente": HorarioDocenteBuilder,
-        }
+        self.__sujetoEventos = SujetoPlanificacion()
+        self.__historial = HistorialEventosHorario()
+        self.__sujetoEventos.suscribir(self.__historial)
 
-    def registrarBuilder(
-        self, tipoHorario: str, constructor: Callable[[], HorarioBuilder]
-    ) -> None:
-        # Registra una variante nueva sin modificar el director ni el servicio.
-        if not tipoHorario:
-            raise ValueError("El tipo de horario es obligatorio.")
-        if not callable(constructor):
-            raise TypeError("El constructor registrado debe ser invocable sin argumentos.")
-        self.__constructoresBuilder[tipoHorario] = constructor
+    @property
+    def historialEventos(self) -> list[dict[str, Any]]:
+        return self.__historial.registros
 
-    def construirHorario(
-        self,
-        tipoHorario: str,
-        resultadoPlanificacion: ResultadoPlanificacion,
-        idHorario: str | None = None,
-        periodo: str | None = None,
-    ) -> HorarioResultado:
-        # Resuelve el Builder registrado y delega la construcción al director.
-        constructor = self.__constructoresBuilder.get(tipoHorario)
-        if constructor is None:
-            raise ValueError(f"No hay un Builder registrado para '{tipoHorario}'.")
-        builder = constructor()
-        if not isinstance(builder, HorarioBuilder):
-            raise TypeError("El constructor registrado debe producir un HorarioBuilder.")
-        return self.__horarioDirector.construir(
-            builder, resultadoPlanificacion, idHorario, periodo
+    def suscribirObservador(self, observador: ObservadorHorario) -> None:
+        self.__sujetoEventos.suscribir(observador)
+
+    def desuscribirObservador(self, observador: ObservadorHorario) -> None:
+        self.__sujetoEventos.desuscribir(observador)
+
+    def cambiarEstrategia(self, estrategia: EstrategiaPlanificacion) -> None:
+        self.__planificador.establecerEstrategia(estrategia)
+        self.__sujetoEventos.notificar(
+            "estrategiaActualizada",
+            {"estrategia": type(estrategia).__name__},
         )
 
     def generarHorarioAcademico(
@@ -84,18 +75,37 @@ class ServicioPlanificacionHorario:
             self.__horaFin,
         )
         resultado = self.__planificador.generarHorario(datos, minimo)
-        return self.construirHorario(
-            "academico", resultado, idHorario, periodo
+        horario = self.__horarioDirector.construir(
+            HorarioAcademicoBuilder(), resultado, idHorario, periodo
         )
+        self.__sujetoEventos.notificar(
+            "horarioGenerado",
+            {
+                "idHorario": idHorario,
+                "periodo": periodo,
+                "totalParalelos": len(horario.paralelos),
+                "totalBloques": len(horario.sesiones),
+                "estrategia": type(self.__planificador.estrategia).__name__,
+            },
+        )
+        return horario
 
     def construirHorarioDocente(
         self, horarioGuardado: dict[str, Any], cedulaDocente: str
     ) -> dict[str, Any]:
-        # Reconstruye el DTO, filtra sus datos y usa el Builder docente registrado.
-        resultado = ResultadoPlanificacion.desdeDiccionario(
-            horarioGuardado
-        ).paraDocente(cedulaDocente)
-        horario = self.construirHorario(
-            "docente", resultado, "HOR-DOC-01", "Periodo actual"
+        # Filtra las sesiones y paralelos del docente antes de construir su vista.
+        resultado = ResultadoPlanificacion.desdeDiccionario(horarioGuardado)
+        resultadoDocente = ResultadoPlanificacion(
+            paralelos=[
+                p for p in resultado.paralelos if p.get("docenteCedula") == cedulaDocente
+            ],
+            sesiones=[
+                s for s in resultado.sesiones if s.get("docente") == cedulaDocente
+            ],
+            estadisticas=dict(resultado.estadisticas),
+            franjasSinConflicto=resultado.franjasSinConflicto,
+        )
+        horario = self.__horarioDirector.construir(
+            HorarioDocenteBuilder(), resultadoDocente, "HOR-DOC-01", "Periodo actual"
         )
         return horario.aDiccionario()

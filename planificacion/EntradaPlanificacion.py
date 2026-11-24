@@ -20,6 +20,7 @@ from modelos.FranjaHoraria import FranjaHoraria
 from .ErroresPlanificacion import DatosPlanificacionInvalidos
 
 
+# -------- Adapter --------
 @dataclass(frozen=True)
 class AsignaturaPlanificacion:
 
@@ -96,3 +97,4 @@ def crearDocente(
             FranjaHoraria(dia, time(horaInicio), time(horaFin))
         )
     return docente
+# ----- Fin del patrón Adapter ------------
