@@ -89,6 +89,7 @@ class KhronoacApp(tk.Tk):
             "seleccionarEspacio":  self.gestorEspacios.seleccionarDesdeInterfaz,
             "generarHorario":      self.generarHorario,
             "construirHorarioDocente": self.construirHorarioDocente,
+            "construirHorarioAula": self.construirHorarioAula,
             "exportarHorario":     self.exportarHorario,
         }
 
@@ -172,6 +173,10 @@ class KhronoacApp(tk.Tk):
     # Delega la vista docente al servicio de aplicación.
     def construirHorarioDocente(self, cedulaDocente: str) -> dict[str, Any] | None:
         return self.servicioAplicacion.construirHorarioDocente(cedulaDocente)
+
+    # Delega la vista por aula al servicio de aplicación.
+    def construirHorarioAula(self, codigoAula: str) -> dict[str, Any] | None:
+        return self.servicioAplicacion.construirHorarioAula(codigoAula)
 
     def exportarHorario(self) -> None:
         try:
