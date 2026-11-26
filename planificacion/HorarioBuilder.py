@@ -102,7 +102,6 @@ class HorarioBuilder:
         if self._resultadoPlanificacion is None:
             raise ValueError("Falta el resultado de planificación para construir el horario.")
 
-
         # Instanciación y ensamblado del objeto central Horario
         horario = Horario(
             self._id_horario,
@@ -136,6 +135,12 @@ class HorarioDocenteBuilder(HorarioBuilder):
     # Construye el horario docente desde un resultado ya filtrado.
 
     tipoHorario = "Horario docente"
+
+
+class HorarioAulaBuilder(HorarioBuilder):
+    # Construye el horario de un aula o laboratorio desde un resultado ya filtrado.
+
+    tipoHorario = "Horario por aula"
 
 
 class HorarioDirector:
