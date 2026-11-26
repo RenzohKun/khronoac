@@ -1,3 +1,8 @@
+# Servicio de aplicación interna para la planificación de horarios.
+# Orquesta la adaptación de datos, la ejecución de estrategias de planificación,
+# la construcción de resultados mediante el patrón Builder y la notificación de
+# eventos mediante el patrón Observer.
+
 from __future__ import annotations
 
 from typing import Any
@@ -6,6 +11,7 @@ from .EntradaPlanificacion import adaptarDatosPlanificacion
 from .EstrategiaPlanificacion import EstrategiaPlanificacion
 from .HorarioBuilder import (
     HorarioAcademicoBuilder,
+    HorarioAulaBuilder,
     HorarioDirector,
     HorarioDocenteBuilder,
     HorarioResultado,
@@ -107,5 +113,36 @@ class ServicioPlanificacionHorario:
         )
         horario = self.__horarioDirector.construir(
             HorarioDocenteBuilder(), resultadoDocente, "HOR-DOC-01", "Periodo actual"
+        )
+        return horario.aDiccionario()
+
+    def construirHorarioAula(
+        self, horarioGuardado: dict[str, Any], codigoAula: str
+    ) -> dict[str, Any]:
+        # Filtra las sesiones y paralelos asignados a un aula o laboratorio específico.
+        resultado = ResultadoPlanificacion.desdeDiccionario(horarioGuardado)
+        sesionesAula = [
+            s for s in resultado.sesiones if s.get("espacio") == codigoAula
+        ]
+        paralelosIds = {s.get("paralelo") for s in sesionesAula}
+        paralelosAula = [
+            p for p in resultado.paralelos if p.get("idParalelo") in paralelosIds
+        ]
+        resultadoAula = ResultadoPlanificacion(
+            paralelos=paralelosAula,
+            sesiones=sesionesAula,
+            estadisticas={
+                **resultado.estadisticas,
+                "codigoAula": codigoAula,
+                "totalParalelos": len(paralelosAula),
+                "totalBloques": len(sesionesAula),
+            },
+            franjasSinConflicto=resultado.franjasSinConflicto,
+        )
+        horario = self.__horarioDirector.construir(
+            HorarioAulaBuilder(),
+            resultadoAula,
+            f"HOR-AULA-{codigoAula}",
+            str(horarioGuardado.get("periodo", "Periodo actual")),
         )
         return horario.aDiccionario()
