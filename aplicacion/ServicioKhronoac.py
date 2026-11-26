@@ -51,7 +51,9 @@ class ServicioKhronoac:
                 MotivoSolicitudHorarioInvalida.SIN_ASIGNATURAS
             )
         if not self.datos["espacios"] or not self.datos["docentes"]:
-            raise SolicitudHorarioInvalida(MotivoSolicitudHorarioInvalida.SIN_RECURSOS)
+            raise SolicitudHorarioInvalida(
+                MotivoSolicitudHorarioInvalida.SIN_RECURSOS
+            )
         if minimo < 1:
             raise SolicitudHorarioInvalida(
                 MotivoSolicitudHorarioInvalida.MINIMO_INVALIDO
@@ -76,6 +78,14 @@ class ServicioKhronoac:
             return None
         return self._servicioPlanificacion.construirHorarioDocente(
             horario, cedulaDocente
+        )
+
+    def construirHorarioAula(self, codigoAula: str) -> dict[str, Any] | None:
+        horario = self.obtenerHorario()
+        if not horario:
+            return None
+        return self._servicioPlanificacion.construirHorarioAula(
+            horario, codigoAula
         )
 
     def exportarHorario(self) -> Path | None:
