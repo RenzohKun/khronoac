@@ -96,6 +96,31 @@ class TestPatronesComportamiento(unittest.TestCase):
         self.assertEqual(eventos, ["estrategiaActualizada", "horarioGenerado"])
         self.assertEqual(len(servicio.historialEventos), 2)
 
+    def testConstruirHorarioPorAula(self) -> None:
+        servicio = ServicioPlanificacionHorario(self.dias, 7, 20)
+        resultado = servicio.generarHorarioAcademico(
+            self.asignaturas,
+            self.docentes,
+            self.espacios,
+            minimo=10,
+            idHorario="HOR-TEST-02",
+            periodo="2026-2",
+        )
+
+        horarioAula = servicio.construirHorarioAula(
+            resultado.aDiccionario(), "Aula-01"
+        )
+        self.assertEqual(horarioAula["tipoHorario"], "Horario por aula")
+        self.assertEqual(len(horarioAula["sesiones"]), 3)
+        self.assertTrue(
+            all(s["espacio"] == "Aula-01" for s in horarioAula["sesiones"])
+        )
+
+        horarioVacio = servicio.construirHorarioAula(
+            resultado.aDiccionario(), "Aula-99"
+        )
+        self.assertEqual(len(horarioVacio["sesiones"]), 0)
+
 
 if __name__ == "__main__":
     unittest.main()
