@@ -30,6 +30,7 @@ class KhronoacInterfaz:
         self.plan_horario: dict[str, Any] | None = None
         self.docentes_horario: list[dict[str, Any]] = []
         self.vistasDocentes: dict[str, str] = {}
+        self.vistasAulas: dict[str, str] = {}
         self.planVistaActual: dict[str, Any] | None = None
         self.asignaturas_estudiantes: list[dict[str, Any]] = []
         self.docentes_estudiantes: list[dict[str, Any]] = []
@@ -1088,7 +1089,21 @@ class KhronoacInterfaz:
             f"Docente: {self.etiquetaDocente(docentes_por_cedula.get(cedula))} ({cedula})": cedula
             for cedula in sorted(cedulas_docentes)
         }
-        opciones = ("Todos los paralelos", *paralelos, *self.vistasDocentes)
+        codigos_aulas = {
+            sesion["espacio"]
+            for sesion in datos_plan.get("sesiones", [])
+            if sesion.get("espacio")
+        }
+        self.vistasAulas = {
+            f"Aula: {codigo}": codigo
+            for codigo in sorted(codigos_aulas)
+        }
+        opciones = (
+            "Todos los paralelos",
+            *paralelos,
+            *self.vistasDocentes,
+            *self.vistasAulas,
+        )
         self.combo_paralelo.configure(values=opciones)
         if self.paralelo_var.get() not in opciones:
             self.paralelo_var.set("Todos los paralelos")
@@ -1105,9 +1120,14 @@ class KhronoacInterfaz:
     def eventoCambioParalelo(self, _evento: tk.Event | None) -> None:
         seleccion = self.paralelo_var.get()
         cedulaDocente = self.vistasDocentes.get(seleccion)
+        codigoAula = self.vistasAulas.get(seleccion)
         if cedulaDocente is not None:
             self.planVistaActual = self.acciones["construirHorarioDocente"](
                 cedulaDocente
+            )
+        elif codigoAula is not None:
+            self.planVistaActual = self.acciones["construirHorarioAula"](
+                codigoAula
             )
         else:
             self.planVistaActual = None
@@ -1125,14 +1145,17 @@ class KhronoacInterfaz:
         alto_cabecera = 36
         inicio_tabla = 132
         seleccion = self.paralelo_var.get()
+        esVistaEspecial = (
+            seleccion in self.vistasDocentes or seleccion in self.vistasAulas
+        )
         planVista = (
             self.planVistaActual
-            if seleccion in self.vistasDocentes
+            if esVistaEspecial
             else self.plan_horario
         )
         sesiones = (planVista or {}).get("sesiones", [])
         paralelo = self.paralelo_var.get()
-        if paralelo != "Todos los paralelos" and paralelo not in self.vistasDocentes:
+        if paralelo != "Todos los paralelos" and not esVistaEspecial:
             sesiones = [sesion for sesion in sesiones if sesion["paralelo"] == paralelo]
 
         sesiones_por_celda: dict[tuple[int, str], list[dict[str, Any]]] = {}
